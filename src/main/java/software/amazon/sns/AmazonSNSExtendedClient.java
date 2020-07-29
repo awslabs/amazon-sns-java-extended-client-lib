@@ -188,7 +188,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
         messageAttributeValue.setDataType("Number");
         messageAttributeValue.setStringValue(messageContentSize.toString());
-        publishRequest.addMessageAttributesEntry(com.amazon.sqs.javamessaging.SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
+        publishRequest.addMessageAttributesEntry(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
 
         checkSizeOfMessageAttributes(publishRequest.getMessageAttributes());
 
