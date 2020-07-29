@@ -1,5 +1,6 @@
 package software.amazon.sns;
 
+import com.amazon.sqs.javamessaging.SQSExtendedClientConstants;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
