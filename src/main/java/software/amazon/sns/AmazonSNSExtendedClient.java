@@ -33,7 +33,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      * will not return until the service call completes.
      *
      * @param snsClient                   The Amazon SNS client to use to connect to Amazon SNS.
-     * @param payloadStorageConfiguration The extended client configuration options controlling the
+     * @param payloadStorageConfiguration The payload storage configuration options controlling the
      *                                    functionality of this client.
      */
     public AmazonSNSExtendedClient(AmazonSNS snsClient, PayloadStorageConfiguration payloadStorageConfiguration) {
