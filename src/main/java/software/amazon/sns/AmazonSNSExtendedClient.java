@@ -20,10 +20,6 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     private PayloadStore payloadStore;
     private PayloadStorageConfiguration payloadStorageConfiguration;
 
-    public AmazonSNSExtendedClient(AmazonSNS amazonSNSToBeExtended) {
-        super(amazonSNSToBeExtended);
-    }
-
     /**
      * Constructs a new Amazon SNS extended client to invoke service methods on
      * Amazon SNS with extended functionality using the specified Amazon SNS
@@ -39,7 +35,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      */
     public AmazonSNSExtendedClient(AmazonSNS snsClient, PayloadStorageConfiguration payloadStorageConfiguration) {
         super(snsClient);
-        this.payloadStorageConfiguration = new PayloadStorageConfiguration(payloadStorageConfiguration);
+        this.payloadStorageConfiguration = payloadStorageConfiguration;
         S3Dao s3Dao = new S3Dao(this.payloadStorageConfiguration.getAmazonS3Client());
         this.payloadStore = new S3BackedPayloadStore(s3Dao, this.payloadStorageConfiguration.getS3BucketName());
     }
@@ -86,36 +82,37 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
             return super.publish(publishRequest);
         }
 
+        if (!StringUtils.isNullOrEmpty(publishRequest.getMessageStructure()) &&
+                publishRequest.getMessageStructure().equals(MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE)) {
+            String errorMessage = "SNS extended client does not support sending JSON messages.";
+            LOGGER.error(errorMessage);
+            throw new AmazonClientException(errorMessage);
+        }
+
         publishRequest.getRequestClientOptions().appendUserAgent(USER_AGENT_HEADER);
 
-        if (!shouldExtendedStoreBeUsed(publishRequest)) {
+        long messageAttributesSize = getMsgAttributesSize(publishRequest.getMessageAttributes());
+        long messageBodySize = Util.getStringSizeInBytes(publishRequest.getMessage());
+
+        if (!shouldExtendedStoreBeUsed(messageAttributesSize + messageBodySize)) {
             return super.publish(publishRequest);
         }
 
-        //Check message attributes for ExtendedClient related constraints 
         checkMessageAttributes(publishRequest.getMessageAttributes());
+        checkSizeOfMessageAttributes(messageAttributesSize);
 
-        if (payloadStorageConfiguration.isAlwaysThroughS3() || isLarge(publishRequest)) {
-            PublishRequest clonedPublishRequest = copyPublishRequest(publishRequest);
-            publishRequest = storeMessageInExtendedStore(clonedPublishRequest);
-        }
+        PublishRequest clonedPublishRequest = copyPublishRequest(publishRequest);
+        publishRequest = storeMessageInExtendedStore(clonedPublishRequest, messageAttributesSize);
+
         return super.publish(publishRequest);
     }
 
-    private boolean shouldExtendedStoreBeUsed(PublishRequest publishRequest) {
-        boolean shouldExtendedStoreBeUsed = false;
-        if (payloadStorageConfiguration.isPayloadSupportEnabled()) {
-            shouldExtendedStoreBeUsed = true;
-        }
-        if (!StringUtils.isNullOrEmpty(publishRequest.getMessageStructure())) {
-            shouldExtendedStoreBeUsed = shouldExtendedStoreBeUsed && !publishRequest.getMessageStructure().equals(MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE);
-        }
-        return shouldExtendedStoreBeUsed;
+    private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
+        return payloadStorageConfiguration.isAlwaysThroughS3() ||
+                (payloadStorageConfiguration.isPayloadSupportEnabled() && isTotalMessageSizeLargerThanThreshold(totalMessageSize));
     }
 
     private void checkMessageAttributes(Map<String, MessageAttributeValue> messageAttributes) {
-        checkSizeOfMessageAttributes(messageAttributes);
-
         int messageAttributesNum = messageAttributes.size();
         if (messageAttributesNum > SQSExtendedClientConstants.MAX_ALLOWED_ATTRIBUTES) {
             String errorMessage = "Number of message attributes [" + messageAttributesNum
@@ -135,10 +132,9 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         }
     }
 
-    private void checkSizeOfMessageAttributes(Map<String, MessageAttributeValue> messageAttributes) {
-        int msgAttributesSize = getMsgAttributesSize(messageAttributes);
-        if (msgAttributesSize > payloadStorageConfiguration.getPayloadSizeThreshold()) {
-            String errorMessage = "Total size of Message attributes is " + msgAttributesSize
+    private void checkSizeOfMessageAttributes(long messageAttributeSize) {
+        if (messageAttributeSize > payloadStorageConfiguration.getPayloadSizeThreshold()) {
+            String errorMessage = "Total size of Message attributes is " + messageAttributeSize
                     + " bytes which is larger than the threshold of " + payloadStorageConfiguration.getPayloadSizeThreshold()
                     + " Bytes. Consider including the payload in the message body instead of message attributes.";
             LOGGER.error(errorMessage);
@@ -146,38 +142,41 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         }
     }
 
-    private boolean isLarge(PublishRequest publishRequest) {
-        int msgAttributesSize = getMsgAttributesSize(publishRequest.getMessageAttributes());
-        long msgBodySize = Util.getStringSizeInBytes(publishRequest.getMessage());
-        long totalMsgSize = msgAttributesSize + msgBodySize;
-        return (totalMsgSize > payloadStorageConfiguration.getPayloadSizeThreshold());
+    private boolean isTotalMessageSizeLargerThanThreshold(long totalMessageSize) {
+        return (totalMessageSize > payloadStorageConfiguration.getPayloadSizeThreshold());
     }
 
     private int getMsgAttributesSize(Map<String, MessageAttributeValue> msgAttributes) {
         int totalMsgAttributesSize = 0;
+
         for (Map.Entry<String, MessageAttributeValue> entry : msgAttributes.entrySet()) {
-            totalMsgAttributesSize += Util.getStringSizeInBytes(entry.getKey());
-
-            MessageAttributeValue entryVal = entry.getValue();
-            if (entryVal.getDataType() != null) {
-                totalMsgAttributesSize += Util.getStringSizeInBytes(entryVal.getDataType());
-            }
-
-            String stringVal = entryVal.getStringValue();
-            if (stringVal != null) {
-                totalMsgAttributesSize += Util.getStringSizeInBytes(stringVal);
-            }
-
-            ByteBuffer binaryVal = entryVal.getBinaryValue();
-            if (binaryVal != null) {
-                totalMsgAttributesSize += binaryVal.array().length;
-            }
+            totalMsgAttributesSize += getMessageAttributeSize(entry.getKey(), entry.getValue());
         }
 
         return totalMsgAttributesSize;
     }
 
-    private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest) {
+    private long getMessageAttributeSize(String MessageAttributeKey, MessageAttributeValue value) {
+        long messageAttributeSize = Util.getStringSizeInBytes(MessageAttributeKey);
+
+        if (value.getDataType() != null) {
+            messageAttributeSize += Util.getStringSizeInBytes(value.getDataType());
+        }
+
+        String stringVal = value.getStringValue();
+        if (stringVal != null) {
+            messageAttributeSize += Util.getStringSizeInBytes(stringVal);
+        }
+
+        ByteBuffer binaryVal = value.getBinaryValue();
+        if (binaryVal != null) {
+            messageAttributeSize += binaryVal.array().length;
+        }
+
+        return messageAttributeSize;
+    }
+
+    private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
         String messageContentStr = publishRequest.getMessage();
         Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
 
@@ -190,7 +189,8 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         messageAttributeValue.setStringValue(messageContentSize.toString());
         publishRequest.addMessageAttributesEntry(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
 
-        checkSizeOfMessageAttributes(publishRequest.getMessageAttributes());
+        messageAttributeSize += getMessageAttributeSize(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
+        checkSizeOfMessageAttributes(messageAttributeSize);
 
         return publishRequest;
     }

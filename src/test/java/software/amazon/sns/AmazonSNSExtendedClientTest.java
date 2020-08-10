@@ -98,15 +98,19 @@ public class AmazonSNSExtendedClientTest {
     }
 
     @Test
-    public void testPublishMessageWithLargePayloadSupportEnabledButMultipleProtocolMsgStructureS3IsNotUsed() {
-        String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
+    public void testPublishMessageWithJSONMessageStructureThrowsAmazonClientException() {
+        String messageBody = "{\"key1\":\"value1\",\"key2\":8.0}";
 
         PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
         publishRequest.setMessageStructure(AmazonSNSExtendedClient.MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE);
-        extendedSnsWithDefaultConfig.publish(publishRequest);
 
-        verify(mockS3, never()).putObject(any(PutObjectRequest.class));
-        verify(mockSnsBackend).publish(eq(publishRequest));
+        try {
+            extendedSnsWithDefaultConfig.publish(publishRequest);
+            Assert.fail("An exception should have been thrown.");
+
+        } catch (AmazonClientException exception) {
+            Assert.assertTrue(exception.getMessage().contains("SNS extended client does not support sending JSON messages"));
+        }
     }
 
     @Test

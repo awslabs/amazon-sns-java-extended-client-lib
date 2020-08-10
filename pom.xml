@@ -7,7 +7,7 @@
     <groupId>software.amazon.sns</groupId>
     <artifactId>sns-extended-client</artifactId>
     <version>1.0.0</version>
-
+    <packaging>jar</packaging>
     <name>Amazon SNS Extended Client Library for Java</name>
     <description>An extension to the Amazon SNS client that enables sending messages up to 2GB via Amazon S3.
     </description>
@@ -127,6 +127,9 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
