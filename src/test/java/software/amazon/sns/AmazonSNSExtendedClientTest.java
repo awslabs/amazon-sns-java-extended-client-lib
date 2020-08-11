@@ -123,8 +123,7 @@ public class AmazonSNSExtendedClientTest {
 
         AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), payloadStorageConfiguration));
 
-        PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
-        snsExtended.publish(publishRequest);
+        snsExtended.publish(SNS_TOPIC_ARN, messageBody);
 
         verify(mockS3, times(1)).putObject(any(PutObjectRequest.class));
     }
@@ -138,8 +137,7 @@ public class AmazonSNSExtendedClientTest {
 
         AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), payloadStorageConfiguration));
 
-        PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
-        snsExtended.publish(publishRequest);
+        snsExtended.publish(SNS_TOPIC_ARN, messageBody);
         verify(mockS3, times(1)).putObject(any(PutObjectRequest.class));
     }
 
