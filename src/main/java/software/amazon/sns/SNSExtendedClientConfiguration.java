@@ -5,10 +5,11 @@ import com.amazonaws.services.s3.model.SSEAwsKeyManagementParams;
 import software.amazon.payloadoffloading.PayloadStorageConfiguration;
 
 public class SNSExtendedClientConfiguration extends PayloadStorageConfiguration {
+    static final int SNS_DEFAULT_MESSAGE_SIZE = 262144;
 
     public SNSExtendedClientConfiguration() {
         super();
-        setPayloadSizeThreshold(AmazonSNSExtendedClientBase.SNS_DEFAULT_MESSAGE_SIZE);
+        setPayloadSizeThreshold(SNS_DEFAULT_MESSAGE_SIZE);
     }
 
     public SNSExtendedClientConfiguration(SNSExtendedClientConfiguration snsExtendedClientConfiguration) {

@@ -13,8 +13,6 @@ import com.amazonaws.services.sns.model.*;
 import java.util.List;
 
 abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
-    static final int SNS_DEFAULT_MESSAGE_SIZE = 262144;
-
     private final AmazonSNS amazonSNSToBeExtended;
 
     public AmazonSNSExtendedClientBase(AmazonSNS amazonSNSToBeExtended) {

@@ -37,7 +37,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration) {
         super(snsClient);
 
-        this.snsExtendedClientConfiguration = new SNSExtendedClientConfiguration(snsExtendedClientConfiguration);
+        this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
         S3Dao s3Dao = new S3Dao(this.snsExtendedClientConfiguration.getAmazonS3Client());
         this.payloadStore = new S3BackedPayloadStore(s3Dao, this.snsExtendedClientConfiguration.getS3BucketName());
     }
