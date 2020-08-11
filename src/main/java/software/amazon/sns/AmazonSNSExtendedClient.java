@@ -15,6 +15,8 @@ import java.util.Map;
 
 public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
+    static final int SNS_DEFAULT_MESSAGE_SIZE = 262144;
+
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
     private static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
     private PayloadStore payloadStore;
@@ -35,7 +37,12 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      */
     public AmazonSNSExtendedClient(AmazonSNS snsClient, PayloadStorageConfiguration payloadStorageConfiguration) {
         super(snsClient);
-        this.payloadStorageConfiguration = payloadStorageConfiguration;
+
+        this.payloadStorageConfiguration = new PayloadStorageConfiguration(payloadStorageConfiguration);
+        if (payloadStorageConfiguration.isAlwaysThroughS3()){
+            this.payloadStorageConfiguration.setPayloadSizeThreshold(SNS_DEFAULT_MESSAGE_SIZE);
+        }
+
         S3Dao s3Dao = new S3Dao(this.payloadStorageConfiguration.getAmazonS3Client());
         this.payloadStore = new S3BackedPayloadStore(s3Dao, this.payloadStorageConfiguration.getS3BucketName());
     }
