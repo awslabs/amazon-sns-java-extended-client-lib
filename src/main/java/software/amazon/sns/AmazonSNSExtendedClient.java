@@ -119,19 +119,6 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         return this.publish((new PublishRequest()).withTopicArn(topicArn).withMessage(message));
     }
 
-    /**
-     * Simplified method form for invoking the Publish operation.
-     *
-     * @param topicArn
-     * @param message
-     * @param subject
-     * @see #publish(PublishRequest)
-     */
-    @Override
-    public PublishResult publish(String topicArn, String message, String subject) {
-        return this.publish((new PublishRequest()).withTopicArn(topicArn).withMessage(message).withSubject(subject));
-    }
-
     private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
         return payloadStorageConfiguration.isAlwaysThroughS3() ||
                 (payloadStorageConfiguration.isPayloadSupportEnabled() && isTotalMessageSizeLargerThanThreshold(totalMessageSize));
