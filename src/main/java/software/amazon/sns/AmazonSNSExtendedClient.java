@@ -15,10 +15,11 @@ import java.util.Map;
 
 public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
+
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
     private static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
     private PayloadStore payloadStore;
-    private PayloadStorageConfiguration payloadStorageConfiguration;
+    private SNSExtendedClientConfiguration snsExtendedClientConfiguration;
 
     /**
      * Constructs a new Amazon SNS extended client to invoke service methods on
@@ -30,14 +31,15 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      * will not return until the service call completes.
      *
      * @param snsClient                   The Amazon SNS client to use to connect to Amazon SNS.
-     * @param payloadStorageConfiguration The payload storage configuration options controlling the
+     * @param snsExtendedClientConfiguration The sns extended client configuration options controlling the
      *                                    functionality of this client.
      */
-    public AmazonSNSExtendedClient(AmazonSNS snsClient, PayloadStorageConfiguration payloadStorageConfiguration) {
+    public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration) {
         super(snsClient);
-        this.payloadStorageConfiguration = payloadStorageConfiguration;
-        S3Dao s3Dao = new S3Dao(this.payloadStorageConfiguration.getAmazonS3Client());
-        this.payloadStore = new S3BackedPayloadStore(s3Dao, this.payloadStorageConfiguration.getS3BucketName());
+
+        this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
+        S3Dao s3Dao = new S3Dao(this.snsExtendedClientConfiguration.getAmazonS3Client());
+        this.payloadStore = new S3BackedPayloadStore(s3Dao, this.snsExtendedClientConfiguration.getS3BucketName());
     }
 
     /**
@@ -120,8 +122,8 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     }
 
     private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
-        return payloadStorageConfiguration.isAlwaysThroughS3() ||
-                (payloadStorageConfiguration.isPayloadSupportEnabled() && isTotalMessageSizeLargerThanThreshold(totalMessageSize));
+        return snsExtendedClientConfiguration.isAlwaysThroughS3() ||
+                (snsExtendedClientConfiguration.isPayloadSupportEnabled() && isTotalMessageSizeLargerThanThreshold(totalMessageSize));
     }
 
     private void checkMessageAttributes(Map<String, MessageAttributeValue> messageAttributes) {
@@ -145,9 +147,9 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     }
 
     private void checkSizeOfMessageAttributes(long messageAttributeSize) {
-        if (messageAttributeSize > payloadStorageConfiguration.getPayloadSizeThreshold()) {
+        if (messageAttributeSize > snsExtendedClientConfiguration.getPayloadSizeThreshold()) {
             String errorMessage = "Total size of Message attributes is " + messageAttributeSize
-                    + " bytes which is larger than the threshold of " + payloadStorageConfiguration.getPayloadSizeThreshold()
+                    + " bytes which is larger than the threshold of " + snsExtendedClientConfiguration.getPayloadSizeThreshold()
                     + " Bytes. Consider including the payload in the message body instead of message attributes.";
             LOGGER.error(errorMessage);
             throw new AmazonClientException(errorMessage);
@@ -155,7 +157,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     }
 
     private boolean isTotalMessageSizeLargerThanThreshold(long totalMessageSize) {
-        return (totalMessageSize > payloadStorageConfiguration.getPayloadSizeThreshold());
+        return (totalMessageSize > snsExtendedClientConfiguration.getPayloadSizeThreshold());
     }
 
     private int getMsgAttributesSize(Map<String, MessageAttributeValue> msgAttributes) {
