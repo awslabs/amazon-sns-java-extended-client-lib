@@ -13,7 +13,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import software.amazon.payloadoffloading.PayloadStorageConfiguration;
 import software.amazon.payloadoffloading.Util;
 
 import java.util.Arrays;
@@ -29,9 +28,8 @@ public class AmazonSNSExtendedClientTest {
     private static final String S3_BUCKET_NAME = "test-bucket-name";
     private static final String SNS_TOPIC_ARN = "test-topic-arn";
     private static final int LESS_THAN_SNS_SIZE_LIMIT = 3;
-    private static final int SNS_SIZE_LIMIT = SQSExtendedClientConstants.DEFAULT_MESSAGE_SIZE_THRESHOLD;
-    private static final int MORE_THAN_SNS_SIZE_LIMIT = SNS_SIZE_LIMIT + 1;
-    // should be > 1 and << SNS_SIZE_LIMIT
+    private static final int MORE_THAN_SNS_SIZE_LIMIT = SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE + 1;
+    // should be > 1 and << SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
     private static final int ARBITRARY_SMALLER_THRESHOLD = 500;
 
     private AmazonSNS extendedSnsWithDefaultConfig;
@@ -44,11 +42,11 @@ public class AmazonSNSExtendedClientTest {
         mockSnsBackend = mock(AmazonSNS.class);
         when(mockS3.putObject(any(PutObjectRequest.class))).thenReturn(null);
 
-        PayloadStorageConfiguration payloadStorageConfiguration = new PayloadStorageConfiguration()
+        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
-                .withPayloadSizeThreshold(SNS_SIZE_LIMIT);
+                .withPayloadSizeThreshold(SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE);
 
-        extendedSnsWithDefaultConfig = spy(new AmazonSNSExtendedClient(mockSnsBackend, payloadStorageConfiguration));
+        extendedSnsWithDefaultConfig = spy(new AmazonSNSExtendedClient(mockSnsBackend, snsExtendedClientConfiguration));
     }
 
     @Test
@@ -70,7 +68,7 @@ public class AmazonSNSExtendedClientTest {
 
     @Test
     public void testPublishSmallMessageS3IsNotUsed() {
-        String messageBody = generateStringWithLength(SNS_SIZE_LIMIT);
+        String messageBody = generateStringWithLength(SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE);
 
         PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
         extendedSnsWithDefaultConfig.publish(publishRequest);
@@ -86,9 +84,9 @@ public class AmazonSNSExtendedClientTest {
     @Test
     public void testPublishMessageWithLargePayloadSupportDisabledS3IsNotUsedAndSqsBackendIsResponsibleToFailIt() {
         String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
-        PayloadStorageConfiguration payloadStorageConfiguration = new PayloadStorageConfiguration()
+        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
                 .withPayloadSupportDisabled();
-        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mockSnsBackend, payloadStorageConfiguration));
+        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mockSnsBackend, snsExtendedClientConfiguration));
 
         PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
         snsExtended.publish(publishRequest);
@@ -116,12 +114,11 @@ public class AmazonSNSExtendedClientTest {
     @Test
     public void testPublishMessageWithAlwaysThroughS3AndSmallMessageS3IsUsed() {
         String messageBody = generateStringWithLength(LESS_THAN_SNS_SIZE_LIMIT);
-        PayloadStorageConfiguration payloadStorageConfiguration = new PayloadStorageConfiguration()
+        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
-                .withPayloadSizeThreshold(SNS_SIZE_LIMIT)
                 .withAlwaysThroughS3(true);
 
-        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), payloadStorageConfiguration));
+        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), snsExtendedClientConfiguration));
 
         snsExtended.publish(SNS_TOPIC_ARN, messageBody);
 
@@ -131,11 +128,11 @@ public class AmazonSNSExtendedClientTest {
     @Test
     public void testPublishMessageWithSetMessageSizeThresholdThresholdIsHonored() {
         String messageBody = generateStringWithLength(ARBITRARY_SMALLER_THRESHOLD * 2);
-        PayloadStorageConfiguration payloadStorageConfiguration = new PayloadStorageConfiguration()
+        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
                 .withPayloadSizeThreshold(ARBITRARY_SMALLER_THRESHOLD);
 
-        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), payloadStorageConfiguration));
+        AmazonSNS snsExtended = spy(new AmazonSNSExtendedClient(mock(AmazonSNSClient.class), snsExtendedClientConfiguration));
 
         snsExtended.publish(SNS_TOPIC_ARN, messageBody);
         verify(mockS3, times(1)).putObject(any(PutObjectRequest.class));
@@ -234,7 +231,7 @@ public class AmazonSNSExtendedClientTest {
 
     @Test
     public void testThrowAmazonClientExceptionWhenSizeOfMessageAttributeKeyIsLargerThanThreshold() {
-        String messageBody = generateStringWithLength(SNS_SIZE_LIMIT);
+        String messageBody = generateStringWithLength(SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE);
         String attributeKey = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
         String attributeValue = generateStringWithLength(LESS_THAN_SNS_SIZE_LIMIT);
 
@@ -252,14 +249,14 @@ public class AmazonSNSExtendedClientTest {
 
         } catch (AmazonClientException exception) {
             Assert.assertTrue(exception.getMessage().contains("Total size of Message attributes is "
-                    + expectedSize + " bytes which is larger than the threshold of " + SNS_SIZE_LIMIT
+                    + expectedSize + " bytes which is larger than the threshold of " + SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
                     + " Bytes. Consider including the payload in the message body instead of message attributes."));
         }
     }
 
     @Test
     public void testThrowAmazonClientExceptionWhenSizeOfMessageAttributeValueIsLargerThanThreshold() {
-        String messageBody = generateStringWithLength(SNS_SIZE_LIMIT);
+        String messageBody = generateStringWithLength(SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE);
         String attributeKey = generateStringWithLength(LESS_THAN_SNS_SIZE_LIMIT);
         String attributeValue = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
 
@@ -277,7 +274,7 @@ public class AmazonSNSExtendedClientTest {
 
         } catch (AmazonClientException exception) {
             Assert.assertTrue(exception.getMessage().contains("Total size of Message attributes is "
-                    + expectedSize + " bytes which is larger than the threshold of " + SNS_SIZE_LIMIT
+                    + expectedSize + " bytes which is larger than the threshold of " + SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
                     + " Bytes. Consider including the payload in the message body instead of message attributes."));
         }
     }
