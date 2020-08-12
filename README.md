@@ -29,45 +29,86 @@ The library relies on the Payload Offloading Java Common Library for AWS for mes
 Below is the code sample that creates a sample topic and queue, subscribes the queue to receive messages from the topic and publishes a test message. The message payload is stored in S3 and the reference to it is published. The SQS Extended Client is used to receive the message.
 
 ```java
-final String BUCKET_NAME = "payload-storage";
-final String TOPIC_NAME = "extended-client-topic";
-final String QUEUE_NAME = "extended-client-queue";
+import com.amazon.sqs.javamessaging.AmazonSQSExtendedClient;
+import com.amazon.sqs.javamessaging.ExtendedClientConfiguration;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.CreateTopicRequest;
+import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
+import com.amazonaws.services.sns.util.Topics;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import software.amazon.sns.AmazonSNSExtendedClient;
 
-//Initialize SNS client and create a new topic
-AmazonSNS snsClient = AmazonSNSClientBuilder.defaultClient();
-AmazonSQS sqsClient = AmazonSQSClientBuilder.defaultClient();
-AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+public class Example {
 
-//Create topic, queue and subscription
-String topicArn = snsClient.createTopic(
-        new CreateTopicRequest().withName(TOPIC_NAME)
-).getTopicArn();
-String queueUrl = sqsClient.createQueue(
-        new CreateQueueRequest().withQueueName(QUEUE_NAME)
-).getQueueUrl();
-Topics.subscribeQueue(
-        snsClient, sqsClient, topicArn, queueUrl
-);
+    public static void main(String[] args) {
+        final String BUCKET_NAME = "extended-payload-storage";
+        final String TOPIC_NAME = "extended-client-topic";
+        final String QUEUE_NAME = "extended-client-queue";
 
-//Initialize SNS extended client
-ExtendedClientConfiguration storageConfiguration = new ExtendedClientConfiguration()
-        .withPayloadSupportEnabled(s3Client, BUCKET_NAME)
-        .withAlwaysThroughS3(true);
-AmazonSNSExtendedClient extendedClient = new AmazonSNSExtendedClient(snsClient, storageConfiguration);
+        //Exceeding message threshold size (in bytes) will store message content in S3 and publish
+        //the S3 reference to the content throught the SNS topic
+        //For example, to store the content of message in S3 that exceed maximum allowed SQS
+        //message size, use SQSExtendedClientConstants.DEFAULT_MESSAGE_SIZE_THRESHOLD
+        final int EXTENDED_STORAGE_MESSAGE_SIZE_THRESHOLD = 8;
 
-//Publish message via SNS with storage in S3
-extendedClient.publish(topicArn, "This message is stored in S3");
+        //Initialize SNS, SQS and S3 clients
+        final AmazonSNS snsClient = AmazonSNSClientBuilder.standard().withRegion("us-east-1").build();
+        final AmazonSQS sqsClient = AmazonSQSClientBuilder.standard().withRegion("us-east-1").build();
+        final AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion("us-east-1").build();
 
-//Initialzie SQS extended client
-ExtendedClientConfiguration sqsExtendedClientConfiguration = new ExtendedClientConfiguration()
-        .withPayloadSupportEnabled(storageConfiguration.getAmazonS3Client(), storageConfiguration.getS3BucketName())
-        .withAlwaysThroughS3(storageConfiguration.isAlwaysThroughS3())
-        .withLegacyReservedAttributeNameDisabled();
-AmazonSQSExtendedClient sqsExtendedClient = new AmazonSQSExtendedClient(sqsClient, sqsExtendedClientConfiguration);
+        //Create bucket, topic, queue and subscription
+        s3Client.createBucket(BUCKET_NAME);
+        final String topicArn = snsClient.createTopic(
+                new CreateTopicRequest().withName(TOPIC_NAME)
+        ).getTopicArn();
+        final String queueUrl = sqsClient.createQueue(
+                new CreateQueueRequest().withQueueName(QUEUE_NAME)
+        ).getQueueUrl();
+        final String subscriptionArn = Topics.subscribeQueue(
+                snsClient, sqsClient, topicArn, queueUrl
+        );
 
-//Read the message from the queue
-ReceiveMessageResult message = sqsExtendedClient.receiveMessage(queueUrl);
-System.out.println(message.getMessages().get(0).getBody());
+        //To read message content stored in S3 transparently through SQS extended client,
+        //set the RawMessageDelivery subscription attribute to TRUE
+        final SetSubscriptionAttributesRequest subscriptionAttributesRequest = new SetSubscriptionAttributesRequest();
+        subscriptionAttributesRequest.setSubscriptionArn(subscriptionArn);
+        subscriptionAttributesRequest.setAttributeName("RawMessageDelivery");
+        subscriptionAttributesRequest.setAttributeValue("TRUE");
+        snsClient.setSubscriptionAttributes(subscriptionAttributesRequest);
+        
+        //Initialize SNS extended client
+        //PayloadSizeThreshold triggers message content storage in S3 when the threshold is exceeded
+        //To store all messages content in S3, use AlwaysThroughS3 flag
+        final ExtendedClientConfiguration storageConfiguration = new ExtendedClientConfiguration()
+                .withPayloadSupportEnabled(s3Client, BUCKET_NAME)
+                .withPayloadSizeThreshold(EXTENDED_STORAGE_MESSAGE_SIZE_THRESHOLD);
+        final AmazonSNSExtendedClient snsExtendedClient = new AmazonSNSExtendedClient(snsClient, storageConfiguration);
+
+        final String message = "This message is stored in S3.";
+        //Publish message via SNS with storage in S3
+        snsExtendedClient.publish(topicArn, message);
+
+        //Initialzie SQS extended client
+        final ExtendedClientConfiguration sqsExtendedClientConfiguration = new ExtendedClientConfiguration()
+                .withPayloadSupportEnabled(
+                        storageConfiguration.getAmazonS3Client(), storageConfiguration.getS3BucketName())
+                .withPayloadSizeThreshold(storageConfiguration.getPayloadSizeThreshold())
+                .withLegacyReservedAttributeNameDisabled();
+        final AmazonSQSExtendedClient sqsExtendedClient =
+                new AmazonSQSExtendedClient(sqsClient, sqsExtendedClientConfiguration);
+
+        //Read the message from the queue
+        final ReceiveMessageResult result = sqsExtendedClient.receiveMessage(queueUrl);
+        System.out.println("Receive message is " + result.getMessages().get(0).getBody());
+    }
+}
+
 ```
 
 ## Releases
