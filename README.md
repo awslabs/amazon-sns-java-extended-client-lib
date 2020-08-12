@@ -31,11 +31,14 @@ Below is the code sample that creates a sample topic and queue, subscribes the q
 ```java
 import com.amazon.sqs.javamessaging.AmazonSQSExtendedClient;
 import com.amazon.sqs.javamessaging.ExtendedClientConfiguration;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
+import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
 import com.amazonaws.services.sns.util.Topics;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -43,24 +46,25 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import software.amazon.sns.AmazonSNSExtendedClient;
+import software.amazon.sns.SNSExtendedClientConfiguration;
 
 public class Example {
 
     public static void main(String[] args) {
-        final String BUCKET_NAME = "extended-payload-storage";
+        final String BUCKET_NAME = "extended-client-bucket";
         final String TOPIC_NAME = "extended-client-topic";
         final String QUEUE_NAME = "extended-client-queue";
+        final Regions region = Regions.DEFAULT_REGION;
 
-        //Exceeding message threshold size (in bytes) will store message content in S3 and publish
-        //the S3 reference to the content throught the SNS topic
-        //For example, to store the content of message in S3 that exceed maximum allowed SQS
-        //message size, use SQSExtendedClientConstants.DEFAULT_MESSAGE_SIZE_THRESHOLD
-        final int EXTENDED_STORAGE_MESSAGE_SIZE_THRESHOLD = 8;
+        //Message threshold control the maximum message size that will be allowed to be published
+        //through SNS using the extended client. Payload of messages exceeding this value will be stored in
+        //S3. The default value of this parameter is 256 KB which is the maximum message size in SNS (and SQS).
+        final int EXTENDED_STORAGE_MESSAGE_SIZE_THRESHOLD = 32;
 
         //Initialize SNS, SQS and S3 clients
-        final AmazonSNS snsClient = AmazonSNSClientBuilder.standard().withRegion("us-east-1").build();
-        final AmazonSQS sqsClient = AmazonSQSClientBuilder.standard().withRegion("us-east-1").build();
-        final AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion("us-east-1").build();
+        final AmazonSNS snsClient = AmazonSNSClientBuilder.standard().withRegion(region).build();
+        final AmazonSQS sqsClient = AmazonSQSClientBuilder.standard().withRegion(region).build();
+        final AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion(region).build();
 
         //Create bucket, topic, queue and subscription
         s3Client.createBucket(BUCKET_NAME);
@@ -81,20 +85,21 @@ public class Example {
         subscriptionAttributesRequest.setAttributeName("RawMessageDelivery");
         subscriptionAttributesRequest.setAttributeValue("TRUE");
         snsClient.setSubscriptionAttributes(subscriptionAttributesRequest);
-        
-        //Initialize SNS extended client
+
+	    //Initialize SNS extended client
         //PayloadSizeThreshold triggers message content storage in S3 when the threshold is exceeded
         //To store all messages content in S3, use AlwaysThroughS3 flag
-        final ExtendedClientConfiguration storageConfiguration = new ExtendedClientConfiguration()
+        final SNSExtendedClientConfiguration storageConfiguration = new SNSExtendedClientConfiguration()
                 .withPayloadSupportEnabled(s3Client, BUCKET_NAME)
                 .withPayloadSizeThreshold(EXTENDED_STORAGE_MESSAGE_SIZE_THRESHOLD);
         final AmazonSNSExtendedClient snsExtendedClient = new AmazonSNSExtendedClient(snsClient, storageConfiguration);
 
-        final String message = "This message is stored in S3.";
+        //This message exceeds the set threshold of 8 bytes and therefore will be stored in S3
+        final String message = "This message is stored in S3 as it exceeds the threshold of 32 bytes set above.";
         //Publish message via SNS with storage in S3
-        snsExtendedClient.publish(topicArn, message);
+        snsExtendedClient.publish(new PublishRequest(topicArn, message));
 
-        //Initialzie SQS extended client
+        //Initialize SQS extended client
         final ExtendedClientConfiguration sqsExtendedClientConfiguration = new ExtendedClientConfiguration()
                 .withPayloadSupportEnabled(
                         storageConfiguration.getAmazonS3Client(), storageConfiguration.getS3BucketName())
@@ -105,10 +110,20 @@ public class Example {
 
         //Read the message from the queue
         final ReceiveMessageResult result = sqsExtendedClient.receiveMessage(queueUrl);
-        System.out.println("Receive message is " + result.getMessages().get(0).getBody());
+        System.out.println("Received message is " + result.getMessages().get(0).getBody());
     }
 }
+```
 
+Output:
+``` 
+Aug 12, 2020 12:42:31 PM software.amazon.payloadoffloading.PayloadStorageConfiguration setPayloadSupportEnabled
+INFO: Payload support enabled.
+Aug 12, 2020 12:42:32 PM software.amazon.payloadoffloading.S3BackedPayloadStore storeOriginalPayload
+INFO: S3 object created, Bucket name: extended-client-bucket, Object key: 09900296-35fc-4927-91f6-768ecf8dafa4.
+Aug 12, 2020 12:42:32 PM software.amazon.payloadoffloading.PayloadStorageConfiguration setPayloadSupportEnabled
+INFO: Payload support enabled.
+Received message is This message is stored in S3. This message is stored in S3.
 ```
 
 ## Releases
