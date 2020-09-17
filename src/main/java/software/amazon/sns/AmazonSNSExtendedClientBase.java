@@ -1,21 +1,13 @@
 package software.amazon.sns;
 
-import com.amazonaws.AmazonWebServiceRequest;
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.ResponseMetadata;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.*;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.*;
 
-import java.util.List;
+abstract class AmazonSNSExtendedClientBase implements SnsClient {
+    private final SnsClient amazonSNSToBeExtended;
 
-abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
-    private final AmazonSNS amazonSNSToBeExtended;
-
-    public AmazonSNSExtendedClientBase(AmazonSNS amazonSNSToBeExtended) {
+    public AmazonSNSExtendedClientBase(SnsClient amazonSNSToBeExtended) {
         this.amazonSNSToBeExtended = amazonSNSToBeExtended;
     }
 
@@ -32,67 +24,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.GetEndpointAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public GetEndpointAttributesResult getEndpointAttributes(GetEndpointAttributesRequest getEndpointAttributesRequest) {
+    public GetEndpointAttributesResponse getEndpointAttributes(GetEndpointAttributesRequest getEndpointAttributesRequest) {
         return amazonSNSToBeExtended.getEndpointAttributes(getEndpointAttributesRequest);
-    }
-
-    /**
-     * Overrides the default endpoint for this client ("https://sns.us-east-1.amazonaws.com"). Callers can use this
-     * method to control which AWS region they want to work with.
-     * <p>
-     * Callers can pass in just the endpoint (ex: "sns.us-east-1.amazonaws.com") or a full URL, including the protocol
-     * (ex: "https://sns.us-east-1.amazonaws.com"). If the protocol is not specified here, the default protocol from
-     * this client's {@link ClientConfiguration} will be used, which by default is HTTPS.
-     * <p>
-     * For more information on using AWS regions with the AWS SDK for Java, and a complete list of all available
-     * endpoints for all AWS services, see: <a
-     * href="http://developer.amazonwebservices.com/connect/entry.jspa?externalID=3912">
-     * http://developer.amazonwebservices.com/connect/entry.jspa?externalID=3912</a>
-     * <p>
-     * <b>This method is not threadsafe. An endpoint should be configured when the client is created and before any
-     * service requests are made. Changing it afterwards creates inevitable race conditions for any service requests in
-     * transit or retrying.</b>
-     *
-     * @param endpoint The endpoint (ex: "sns.us-east-1.amazonaws.com") or a full URL, including the protocol (ex:
-     *                 "https://sns.us-east-1.amazonaws.com") of the region specific AWS endpoint this client will communicate
-     *                 with.
-     * @deprecated use {@link AwsClientBuilder#setEndpointConfiguration(AwsClientBuilder.EndpointConfiguration)} for
-     * example:
-     * {@code builder.setEndpointConfiguration(new EndpointConfiguration(endpoint, signingRegion));}
-     */
-    @Override
-    @Deprecated
-    public void setEndpoint(String endpoint) {
-        amazonSNSToBeExtended.setEndpoint(endpoint);
-    }
-
-    /**
-     * An alternative to {@link AmazonSNS#setEndpoint(String)}, sets the regional endpoint for this client's service
-     * calls. Callers can use this method to control which AWS region they want to work with.
-     * <p>
-     * By default, all service endpoints in all regions use the https protocol. To use http instead, specify it in the
-     * {@link ClientConfiguration} supplied at construction.
-     * <p>
-     * <b>This method is not threadsafe. A region should be configured when the client is created and before any service
-     * requests are made. Changing it afterwards creates inevitable race conditions for any service requests in transit
-     * or retrying.</b>
-     *
-     * @param region The region this client will communicate with. See {@link Region#getRegion(Regions)}
-     *               for accessing a given region. Must not be null and must be a region where the service is available.
-     * @see Region#getRegion(Regions)
-     * @see Region#createClient(Class, AWSCredentialsProvider, ClientConfiguration)
-     * @see Region#isServiceSupported(String)
-     * @deprecated use {@link AwsClientBuilder#setRegion(String)}
-     */
-    @Override
-    @Deprecated
-    public void setRegion(Region region) {
-        amazonSNSToBeExtended.setRegion(region);
     }
 
     /**
@@ -107,27 +47,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.AddPermission
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermission" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public AddPermissionResult addPermission(AddPermissionRequest addPermissionRequest) {
+    public AddPermissionResponse addPermission(AddPermissionRequest addPermissionRequest) {
         return amazonSNSToBeExtended.addPermission(addPermissionRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the AddPermission operation.
-     *
-     * @param topicArn
-     * @param label
-     * @param aWSAccountIds
-     * @param actionNames
-     * @see #addPermission(AddPermissionRequest)
-     */
-    @Override
-    public AddPermissionResult addPermission(String topicArn, String label, List<String> aWSAccountIds, List<String> actionNames) {
-        return amazonSNSToBeExtended.addPermission(topicArn, label, aWSAccountIds, actionNames);
     }
 
     /**
@@ -146,12 +74,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.CheckIfPhoneNumberIsOptedOut
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOut"
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public CheckIfPhoneNumberIsOptedOutResult checkIfPhoneNumberIsOptedOut(CheckIfPhoneNumberIsOptedOutRequest checkIfPhoneNumberIsOptedOutRequest) {
+    public CheckIfPhoneNumberIsOptedOutResponse checkIfPhoneNumberIsOptedOut(CheckIfPhoneNumberIsOptedOutRequest checkIfPhoneNumberIsOptedOutRequest) {
         return amazonSNSToBeExtended.checkIfPhoneNumberIsOptedOut(checkIfPhoneNumberIsOptedOutRequest);
     }
 
@@ -170,38 +100,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws NotFoundException                  Indicates that the requested resource does not exist.
      * @throws InternalErrorException             Indicates an internal service error.
      * @throws AuthorizationErrorException        Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException                 If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                       Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ConfirmSubscription
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscription" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public ConfirmSubscriptionResult confirmSubscription(ConfirmSubscriptionRequest confirmSubscriptionRequest) {
+    public ConfirmSubscriptionResponse confirmSubscription(ConfirmSubscriptionRequest confirmSubscriptionRequest) {
         return amazonSNSToBeExtended.confirmSubscription(confirmSubscriptionRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the ConfirmSubscription operation.
-     *
-     * @param topicArn
-     * @param token
-     * @param authenticateOnUnsubscribe
-     * @see #confirmSubscription(ConfirmSubscriptionRequest)
-     */
-    @Override
-    public ConfirmSubscriptionResult confirmSubscription(String topicArn, String token, String authenticateOnUnsubscribe) {
-        return amazonSNSToBeExtended.confirmSubscription(topicArn, token, authenticateOnUnsubscribe);
-    }
-
-    /**
-     * Simplified method form for invoking the ConfirmSubscription operation.
-     *
-     * @param topicArn
-     * @param token
-     * @see #confirmSubscription(ConfirmSubscriptionRequest)
-     */
-    @Override
-    public ConfirmSubscriptionResult confirmSubscription(String topicArn, String token) {
-        return amazonSNSToBeExtended.confirmSubscription(topicArn, token);
     }
 
     /**
@@ -238,12 +145,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.CreatePlatformApplication
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public CreatePlatformApplicationResult createPlatformApplication(CreatePlatformApplicationRequest createPlatformApplicationRequest) {
+    public CreatePlatformApplicationResponse createPlatformApplication(CreatePlatformApplicationRequest createPlatformApplicationRequest) {
         return amazonSNSToBeExtended.createPlatformApplication(createPlatformApplicationRequest);
     }
 
@@ -272,12 +181,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.CreatePlatformEndpoint
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpoint" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public CreatePlatformEndpointResult createPlatformEndpoint(CreatePlatformEndpointRequest createPlatformEndpointRequest) {
+    public CreatePlatformEndpointResponse createPlatformEndpoint(CreatePlatformEndpointRequest createPlatformEndpointRequest) {
         return amazonSNSToBeExtended.createPlatformEndpoint(createPlatformEndpointRequest);
     }
 
@@ -295,24 +206,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws TopicLimitExceededException Indicates that the customer already owns the maximum allowed number of topics.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.CreateTopic
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopic" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public CreateTopicResult createTopic(CreateTopicRequest createTopicRequest) {
+    public CreateTopicResponse createTopic(CreateTopicRequest createTopicRequest) {
         return amazonSNSToBeExtended.createTopic(createTopicRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the CreateTopic operation.
-     *
-     * @param name
-     * @see #createTopic(CreateTopicRequest)
-     */
-    @Override
-    public CreateTopicResult createTopic(String name) {
-        return amazonSNSToBeExtended.createTopic(name);
     }
 
     /**
@@ -331,12 +233,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.DeleteEndpoint
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpoint" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public DeleteEndpointResult deleteEndpoint(DeleteEndpointRequest deleteEndpointRequest) {
+    public DeleteEndpointResponse deleteEndpoint(DeleteEndpointRequest deleteEndpointRequest) {
         return amazonSNSToBeExtended.deleteEndpoint(deleteEndpointRequest);
     }
 
@@ -352,12 +256,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.DeletePlatformApplication
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplication" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public DeletePlatformApplicationResult deletePlatformApplication(DeletePlatformApplicationRequest deletePlatformApplicationRequest) {
+    public DeletePlatformApplicationResponse deletePlatformApplication(DeletePlatformApplicationRequest deletePlatformApplicationRequest) {
         return amazonSNSToBeExtended.deletePlatformApplication(deletePlatformApplicationRequest);
     }
 
@@ -374,24 +280,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.DeleteTopic
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopic" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public DeleteTopicResult deleteTopic(DeleteTopicRequest deleteTopicRequest) {
+    public DeleteTopicResponse deleteTopic(DeleteTopicRequest deleteTopicRequest) {
         return amazonSNSToBeExtended.deleteTopic(deleteTopicRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the DeleteTopic operation.
-     *
-     * @param topicArn
-     * @see #deleteTopic(DeleteTopicRequest)
-     */
-    @Override
-    public DeleteTopicResult deleteTopic(String topicArn) {
-        return amazonSNSToBeExtended.deleteTopic(topicArn);
     }
 
     /**
@@ -408,12 +305,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.GetPlatformApplicationAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributes"
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public GetPlatformApplicationAttributesResult getPlatformApplicationAttributes(GetPlatformApplicationAttributesRequest getPlatformApplicationAttributesRequest) {
+    public GetPlatformApplicationAttributesResponse getPlatformApplicationAttributes(GetPlatformApplicationAttributesRequest getPlatformApplicationAttributesRequest) {
         return amazonSNSToBeExtended.getPlatformApplicationAttributes(getPlatformApplicationAttributesRequest);
     }
 
@@ -432,12 +331,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.GetSMSAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public GetSMSAttributesResult getSMSAttributes(GetSMSAttributesRequest getSMSAttributesRequest) {
+    public GetSmsAttributesResponse getSMSAttributes(GetSmsAttributesRequest getSMSAttributesRequest) {
         return amazonSNSToBeExtended.getSMSAttributes(getSMSAttributesRequest);
     }
 
@@ -452,24 +353,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.GetSubscriptionAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public GetSubscriptionAttributesResult getSubscriptionAttributes(GetSubscriptionAttributesRequest getSubscriptionAttributesRequest) {
+    public GetSubscriptionAttributesResponse getSubscriptionAttributes(GetSubscriptionAttributesRequest getSubscriptionAttributesRequest) {
         return amazonSNSToBeExtended.getSubscriptionAttributes(getSubscriptionAttributesRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the GetSubscriptionAttributes operation.
-     *
-     * @param subscriptionArn
-     * @see #getSubscriptionAttributes(GetSubscriptionAttributesRequest)
-     */
-    @Override
-    public GetSubscriptionAttributesResult getSubscriptionAttributes(String subscriptionArn) {
-        return amazonSNSToBeExtended.getSubscriptionAttributes(subscriptionArn);
     }
 
     /**
@@ -484,24 +376,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.GetTopicAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public GetTopicAttributesResult getTopicAttributes(GetTopicAttributesRequest getTopicAttributesRequest) {
+    public GetTopicAttributesResponse getTopicAttributes(GetTopicAttributesRequest getTopicAttributesRequest) {
         return amazonSNSToBeExtended.getTopicAttributes(getTopicAttributesRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the GetTopicAttributes operation.
-     *
-     * @param topicArn
-     * @see #getTopicAttributes(GetTopicAttributesRequest)
-     */
-    @Override
-    public GetTopicAttributesResult getTopicAttributes(String topicArn) {
-        return amazonSNSToBeExtended.getTopicAttributes(topicArn);
     }
 
     /**
@@ -524,12 +407,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListEndpointsByPlatformApplication
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication"
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public ListEndpointsByPlatformApplicationResult listEndpointsByPlatformApplication(ListEndpointsByPlatformApplicationRequest listEndpointsByPlatformApplicationRequest) {
+    public ListEndpointsByPlatformApplicationResponse listEndpointsByPlatformApplication(ListEndpointsByPlatformApplicationRequest listEndpointsByPlatformApplicationRequest) {
         return amazonSNSToBeExtended.listEndpointsByPlatformApplication(listEndpointsByPlatformApplicationRequest);
     }
 
@@ -552,12 +437,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListPhoneNumbersOptedOut
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOut" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public ListPhoneNumbersOptedOutResult listPhoneNumbersOptedOut(ListPhoneNumbersOptedOutRequest listPhoneNumbersOptedOutRequest) {
+    public ListPhoneNumbersOptedOutResponse listPhoneNumbersOptedOut(ListPhoneNumbersOptedOutRequest listPhoneNumbersOptedOutRequest) {
         return amazonSNSToBeExtended.listPhoneNumbersOptedOut(listPhoneNumbersOptedOutRequest);
     }
 
@@ -580,23 +467,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListPlatformApplications
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public ListPlatformApplicationsResult listPlatformApplications(ListPlatformApplicationsRequest listPlatformApplicationsRequest) {
+    public ListPlatformApplicationsResponse listPlatformApplications(ListPlatformApplicationsRequest listPlatformApplicationsRequest) {
         return amazonSNSToBeExtended.listPlatformApplications(listPlatformApplicationsRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the ListPlatformApplications operation.
-     *
-     * @see #listPlatformApplications(ListPlatformApplicationsRequest)
-     */
-    @Override
-    public ListPlatformApplicationsResult listPlatformApplications() {
-        return amazonSNSToBeExtended.listPlatformApplications();
     }
 
     /**
@@ -614,34 +493,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListSubscriptions
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public ListSubscriptionsResult listSubscriptions(ListSubscriptionsRequest listSubscriptionsRequest) {
+    public ListSubscriptionsResponse listSubscriptions(ListSubscriptionsRequest listSubscriptionsRequest) {
         return amazonSNSToBeExtended.listSubscriptions(listSubscriptionsRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the ListSubscriptions operation.
-     *
-     * @see #listSubscriptions(ListSubscriptionsRequest)
-     */
-    @Override
-    public ListSubscriptionsResult listSubscriptions() {
-        return amazonSNSToBeExtended.listSubscriptions();
-    }
-
-    /**
-     * Simplified method form for invoking the ListSubscriptions operation.
-     *
-     * @param nextToken
-     * @see #listSubscriptions(ListSubscriptionsRequest)
-     */
-    @Override
-    public ListSubscriptionsResult listSubscriptions(String nextToken) {
-        return amazonSNSToBeExtended.listSubscriptions(nextToken);
     }
 
     /**
@@ -660,36 +520,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListSubscriptionsByTopic
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public ListSubscriptionsByTopicResult listSubscriptionsByTopic(ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest) {
+    public ListSubscriptionsByTopicResponse listSubscriptionsByTopic(ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest) {
         return amazonSNSToBeExtended.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the ListSubscriptionsByTopic operation.
-     *
-     * @param topicArn
-     * @see #listSubscriptionsByTopic(ListSubscriptionsByTopicRequest)
-     */
-    @Override
-    public ListSubscriptionsByTopicResult listSubscriptionsByTopic(String topicArn) {
-        return amazonSNSToBeExtended.listSubscriptionsByTopic(topicArn);
-    }
-
-    /**
-     * Simplified method form for invoking the ListSubscriptionsByTopic operation.
-     *
-     * @param topicArn
-     * @param nextToken
-     * @see #listSubscriptionsByTopic(ListSubscriptionsByTopicRequest)
-     */
-    @Override
-    public ListSubscriptionsByTopicResult listSubscriptionsByTopic(String topicArn, String nextToken) {
-        return amazonSNSToBeExtended.listSubscriptionsByTopic(topicArn, nextToken);
     }
 
     /**
@@ -707,34 +546,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.ListTopics
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public ListTopicsResult listTopics(ListTopicsRequest listTopicsRequest) {
+    public ListTopicsResponse listTopics(ListTopicsRequest listTopicsRequest) {
         return amazonSNSToBeExtended.listTopics(listTopicsRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the ListTopics operation.
-     *
-     * @see #listTopics(ListTopicsRequest)
-     */
-    @Override
-    public ListTopicsResult listTopics() {
-        return amazonSNSToBeExtended.listTopics();
-    }
-
-    /**
-     * Simplified method form for invoking the ListTopics operation.
-     *
-     * @param nextToken
-     * @see #listTopics(ListTopicsRequest)
-     */
-    @Override
-    public ListTopicsResult listTopics(String nextToken) {
-        return amazonSNSToBeExtended.listTopics(nextToken);
     }
 
     /**
@@ -753,12 +573,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.OptInPhoneNumber
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumber" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public OptInPhoneNumberResult optInPhoneNumber(OptInPhoneNumberRequest optInPhoneNumberRequest) {
+    public OptInPhoneNumberResponse optInPhoneNumber(OptInPhoneNumberRequest optInPhoneNumberRequest) {
         return amazonSNSToBeExtended.optInPhoneNumber(optInPhoneNumberRequest);
     }
 
@@ -794,38 +616,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws EndpointDisabledException            Exception error indicating endpoint disabled.
      * @throws PlatformApplicationDisabledException Exception error indicating platform application disabled.
      * @throws AuthorizationErrorException          Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException                   If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.Publish
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Publish" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public PublishResult publish(PublishRequest publishRequest) {
+    public PublishResponse publish(PublishRequest publishRequest) {
         return amazonSNSToBeExtended.publish(publishRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the Publish operation.
-     *
-     * @param topicArn
-     * @param message
-     * @see #publish(PublishRequest)
-     */
-    @Override
-    public PublishResult publish(String topicArn, String message) {
-        return amazonSNSToBeExtended.publish(topicArn, message);
-    }
-
-    /**
-     * Simplified method form for invoking the Publish operation.
-     *
-     * @param topicArn
-     * @param message
-     * @param subject
-     * @see #publish(PublishRequest)
-     */
-    @Override
-    public PublishResult publish(String topicArn, String message, String subject) {
-        return amazonSNSToBeExtended.publish(topicArn, message, subject);
     }
 
     /**
@@ -839,25 +638,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.RemovePermission
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermission" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public RemovePermissionResult removePermission(RemovePermissionRequest removePermissionRequest) {
+    public RemovePermissionResponse removePermission(RemovePermissionRequest removePermissionRequest) {
         return amazonSNSToBeExtended.removePermission(removePermissionRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the RemovePermission operation.
-     *
-     * @param topicArn
-     * @param label
-     * @see #removePermission(RemovePermissionRequest)
-     */
-    @Override
-    public RemovePermissionResult removePermission(String topicArn, String label) {
-        return amazonSNSToBeExtended.removePermission(topicArn, label);
     }
 
     /**
@@ -873,12 +662,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.SetEndpointAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public SetEndpointAttributesResult setEndpointAttributes(SetEndpointAttributesRequest setEndpointAttributesRequest) {
+    public SetEndpointAttributesResponse setEndpointAttributes(SetEndpointAttributesRequest setEndpointAttributesRequest) {
         return amazonSNSToBeExtended.setEndpointAttributes(setEndpointAttributesRequest);
     }
 
@@ -897,12 +688,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.SetPlatformApplicationAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributes"
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public SetPlatformApplicationAttributesResult setPlatformApplicationAttributes(SetPlatformApplicationAttributesRequest setPlatformApplicationAttributesRequest) {
+    public SetPlatformApplicationAttributesResponse setPlatformApplicationAttributes(SetPlatformApplicationAttributesRequest setPlatformApplicationAttributesRequest) {
         return amazonSNSToBeExtended.setPlatformApplicationAttributes(setPlatformApplicationAttributesRequest);
     }
 
@@ -924,12 +717,14 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      *                                     account.
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.SetSMSAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public SetSMSAttributesResult setSMSAttributes(SetSMSAttributesRequest setSMSAttributesRequest) {
+    public SetSmsAttributesResponse setSMSAttributes(SetSmsAttributesRequest setSMSAttributesRequest) {
         return amazonSNSToBeExtended.setSMSAttributes(setSMSAttributesRequest);
     }
 
@@ -946,26 +741,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException             Indicates an internal service error.
      * @throws NotFoundException                  Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException        Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException                 If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                       Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.SetSubscriptionAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributes" target="_top">AWS
      * API Documentation</a>
      */
     @Override
-    public SetSubscriptionAttributesResult setSubscriptionAttributes(SetSubscriptionAttributesRequest setSubscriptionAttributesRequest) {
+    public SetSubscriptionAttributesResponse setSubscriptionAttributes(SetSubscriptionAttributesRequest setSubscriptionAttributesRequest) {
         return amazonSNSToBeExtended.setSubscriptionAttributes(setSubscriptionAttributesRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the SetSubscriptionAttributes operation.
-     *
-     * @param subscriptionArn
-     * @param attributeName
-     * @param attributeValue
-     * @see #setSubscriptionAttributes(SetSubscriptionAttributesRequest)
-     */
-    @Override
-    public SetSubscriptionAttributesResult setSubscriptionAttributes(String subscriptionArn, String attributeName, String attributeValue) {
-        return amazonSNSToBeExtended.setSubscriptionAttributes(subscriptionArn, attributeName, attributeValue);
     }
 
     /**
@@ -979,26 +763,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.SetTopicAttributes
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributes" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public SetTopicAttributesResult setTopicAttributes(SetTopicAttributesRequest setTopicAttributesRequest) {
+    public SetTopicAttributesResponse setTopicAttributes(SetTopicAttributesRequest setTopicAttributesRequest) {
         return amazonSNSToBeExtended.setTopicAttributes(setTopicAttributesRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the SetTopicAttributes operation.
-     *
-     * @param topicArn
-     * @param attributeName
-     * @param attributeValue
-     * @see #setTopicAttributes(SetTopicAttributesRequest)
-     */
-    @Override
-    public SetTopicAttributesResult setTopicAttributes(String topicArn, String attributeName, String attributeValue) {
-        return amazonSNSToBeExtended.setTopicAttributes(topicArn, attributeName, attributeValue);
     }
 
     /**
@@ -1020,26 +793,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException             Indicates an internal service error.
      * @throws NotFoundException                  Indicates that the requested resource does not exist.
      * @throws AuthorizationErrorException        Indicates that the user has been denied access to the requested resource.
+     * @throws SdkClientException                 If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                       Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.Subscribe
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscribe" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public SubscribeResult subscribe(SubscribeRequest subscribeRequest) {
+    public SubscribeResponse subscribe(SubscribeRequest subscribeRequest) {
         return amazonSNSToBeExtended.subscribe(subscribeRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the Subscribe operation.
-     *
-     * @param topicArn
-     * @param protocol
-     * @param endpoint
-     * @see #subscribe(SubscribeRequest)
-     */
-    @Override
-    public SubscribeResult subscribe(String topicArn, String protocol, String endpoint) {
-        return amazonSNSToBeExtended.subscribe(topicArn, protocol, endpoint);
     }
 
     /**
@@ -1060,51 +822,15 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @throws InternalErrorException      Indicates an internal service error.
      * @throws AuthorizationErrorException Indicates that the user has been denied access to the requested resource.
      * @throws NotFoundException           Indicates that the requested resource does not exist.
+     * @throws SdkClientException          If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException                Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
      * @sample AmazonSNS.Unsubscribe
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Unsubscribe" target="_top">AWS API
      * Documentation</a>
      */
     @Override
-    public UnsubscribeResult unsubscribe(UnsubscribeRequest unsubscribeRequest) {
+    public UnsubscribeResponse unsubscribe(UnsubscribeRequest unsubscribeRequest) {
         return amazonSNSToBeExtended.unsubscribe(unsubscribeRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the Unsubscribe operation.
-     *
-     * @param subscriptionArn
-     * @see #unsubscribe(UnsubscribeRequest)
-     */
-    @Override
-    public UnsubscribeResult unsubscribe(String subscriptionArn) {
-        return amazonSNSToBeExtended.unsubscribe(subscriptionArn);
-    }
-
-    /**
-     * Shuts down this client object, releasing any resources that might be held open. This is an optional method, and
-     * callers are not expected to call it, but can if they want to explicitly release any open resources. Once a client
-     * has been shutdown, it should not be used to make any more requests.
-     */
-    @Override
-    public void shutdown() {
-        amazonSNSToBeExtended.shutdown();
-    }
-
-    /**
-     * Returns additional metadata for a previously executed successful request, typically used for debugging issues
-     * where a service isn't acting as expected. This data isn't considered part of the result data returned by an
-     * operation, so it's available through this separate, diagnostic interface.
-     * <p>
-     * Response metadata is only cached for a limited period of time, so if you need to access this extra diagnostic
-     * information for an executed request, you should use this method to retrieve it as soon as possible after
-     * executing a request.
-     *
-     * @param request The originally executed request.
-     * @return The response metadata for the specified request, or null if none is available.
-     */
-    @Override
-    public ResponseMetadata getCachedResponseMetadata(AmazonWebServiceRequest request) {
-        return amazonSNSToBeExtended.getCachedResponseMetadata(request);
     }
 
     /**
@@ -1114,7 +840,7 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @return Result of the ListTagsForResource operation returned by the service
      */
     @Override
-    public ListTagsForResourceResult listTagsForResource(ListTagsForResourceRequest request) {
+    public ListTagsForResourceResponse listTagsForResource(ListTagsForResourceRequest request) {
         return amazonSNSToBeExtended.listTagsForResource(request);
     }
 
@@ -1125,7 +851,7 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @return Result of the TagResource operation returned by the service.
      */
     @Override
-    public TagResourceResult tagResource(TagResourceRequest request) {
+    public TagResourceResponse tagResource(TagResourceRequest request) {
         return amazonSNSToBeExtended.tagResource(request);
     }
 
@@ -1136,7 +862,17 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
      * @return Result of the UntagResource operation returned by the service.
      */
     @Override
-    public UntagResourceResult untagResource(UntagResourceRequest request) {
+    public UntagResourceResponse untagResource(UntagResourceRequest request) {
         return amazonSNSToBeExtended.untagResource(request);
+    }
+
+    @Override
+    public String serviceName() {
+        return amazonSNSToBeExtended.serviceName();
+    }
+
+    @Override
+    public void close() {
+        amazonSNSToBeExtended.close();
     }
 }

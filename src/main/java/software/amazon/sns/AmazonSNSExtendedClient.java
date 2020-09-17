@@ -2,22 +2,25 @@ package software.amazon.sns;
 
 import com.amazon.sqs.javamessaging.SQSExtendedClientConstants;
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.model.*;
 import com.amazonaws.util.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.*;
 import software.amazon.payloadoffloading.*;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
+    static final String USER_AGENT_HEADER_NAME = "User-Agent";
+    static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
 
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
-    private static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
     private PayloadStore payloadStore;
     private SNSExtendedClientConfiguration snsExtendedClientConfiguration;
 
@@ -34,7 +37,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      * @param snsExtendedClientConfiguration The sns extended client configuration options controlling the
      *                                    functionality of this client.
      */
-    public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration) {
+    public AmazonSNSExtendedClient(SnsClient snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration) {
         super(snsClient);
 
         this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
@@ -79,46 +82,36 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      * Documentation</a>
      */
     @Override
-    public PublishResult publish(PublishRequest publishRequest) {
-        if (publishRequest == null || StringUtils.isNullOrEmpty(publishRequest.getMessage())) {
+    public PublishResponse publish(PublishRequest publishRequest) {
+        if (publishRequest == null || StringUtils.isNullOrEmpty(publishRequest.message())) {
             return super.publish(publishRequest);
         }
 
-        if (!StringUtils.isNullOrEmpty(publishRequest.getMessageStructure()) &&
-                publishRequest.getMessageStructure().equals(MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE)) {
+        if (!StringUtils.isNullOrEmpty(publishRequest.messageStructure()) &&
+                publishRequest.messageStructure().equals(MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE)) {
             String errorMessage = "SNS extended client does not support sending JSON messages.";
             LOGGER.error(errorMessage);
             throw new AmazonClientException(errorMessage);
         }
 
-        publishRequest.getRequestClientOptions().appendUserAgent(USER_AGENT_HEADER);
+        PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
+        publishRequestBuilder.overrideConfiguration(AwsRequestOverrideConfiguration.builder().putHeader(USER_AGENT_HEADER_NAME, USER_AGENT_HEADER).build());
+        publishRequest = publishRequestBuilder.build();
 
-        long messageAttributesSize = getMsgAttributesSize(publishRequest.getMessageAttributes());
-        long messageBodySize = Util.getStringSizeInBytes(publishRequest.getMessage());
+        long messageAttributesSize = getMsgAttributesSize(publishRequest.messageAttributes());
+        long messageBodySize = Util.getStringSizeInBytes(publishRequest.message());
 
         if (!shouldExtendedStoreBeUsed(messageAttributesSize + messageBodySize)) {
             return super.publish(publishRequest);
         }
 
-        checkMessageAttributes(publishRequest.getMessageAttributes());
+        checkMessageAttributes(publishRequest.messageAttributes());
         checkSizeOfMessageAttributes(messageAttributesSize);
 
         PublishRequest clonedPublishRequest = copyPublishRequest(publishRequest);
         publishRequest = storeMessageInExtendedStore(clonedPublishRequest, messageAttributesSize);
 
         return super.publish(publishRequest);
-    }
-
-    /**
-     * Simplified method form for invoking the Publish operation.
-     *
-     * @param topicArn
-     * @param message
-     * @see #publish(PublishRequest)
-     */
-    @Override
-    public PublishResult publish(String topicArn, String message) {
-        return this.publish((new PublishRequest()).withTopicArn(topicArn).withMessage(message));
     }
 
     private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
@@ -173,48 +166,53 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     private long getMessageAttributeSize(String MessageAttributeKey, MessageAttributeValue value) {
         long messageAttributeSize = Util.getStringSizeInBytes(MessageAttributeKey);
 
-        if (value.getDataType() != null) {
-            messageAttributeSize += Util.getStringSizeInBytes(value.getDataType());
+        if (value.dataType() != null) {
+            messageAttributeSize += Util.getStringSizeInBytes(value.dataType());
         }
 
-        String stringVal = value.getStringValue();
+        String stringVal = value.stringValue();
         if (stringVal != null) {
             messageAttributeSize += Util.getStringSizeInBytes(stringVal);
         }
 
-        ByteBuffer binaryVal = value.getBinaryValue();
+        SdkBytes binaryVal = value.binaryValue();
         if (binaryVal != null) {
-            messageAttributeSize += binaryVal.array().length;
+            messageAttributeSize += binaryVal.asByteArray().length;
         }
 
         return messageAttributeSize;
     }
 
     private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
-        String messageContentStr = publishRequest.getMessage();
+        String messageContentStr = publishRequest.message();
         Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
 
+        PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
         String largeMessagePointer = payloadStore.storeOriginalPayload(messageContentStr,
                 messageContentSize);
-        publishRequest.setMessage(largeMessagePointer);
+        publishRequestBuilder.message(largeMessagePointer);
 
-        MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
-        messageAttributeValue.setDataType("Number");
-        messageAttributeValue.setStringValue(messageContentSize.toString());
-        publishRequest.addMessageAttributesEntry(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
+        MessageAttributeValue.Builder messageAttributeValueBuilder = MessageAttributeValue.builder();
+        messageAttributeValueBuilder.dataType("Number");
+        messageAttributeValueBuilder.stringValue(messageContentSize.toString());
+        MessageAttributeValue messageAttributeValue = messageAttributeValueBuilder.build();
+
+        Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
+        attributes.put(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
+        publishRequestBuilder.messageAttributes(attributes);
 
         messageAttributeSize += getMessageAttributeSize(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
         checkSizeOfMessageAttributes(messageAttributeSize);
 
-        return publishRequest;
+        return publishRequestBuilder.build();
     }
 
     private PublishRequest copyPublishRequest(PublishRequest publishRequest) {
         // We only modify Message and MessageAttributes, to avoid performance impact let's shallow-copy 
         // the request and then copy the MessageAttributes map.
-        PublishRequest clonedPublishRequest = publishRequest.clone();
-        Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.getMessageAttributes());
-        clonedPublishRequest.setMessageAttributes(attributes);
-        return clonedPublishRequest;
+        PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
+        Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
+        publishRequestBuilder.messageAttributes(attributes);
+        return publishRequestBuilder.build();
     }
 }
