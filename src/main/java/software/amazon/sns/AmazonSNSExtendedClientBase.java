@@ -2,15 +2,21 @@ package software.amazon.sns;
 
 import java.util.function.Consumer;
 
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.*;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.*;
+import software.amazon.awssdk.services.sns.paginators.ListEndpointsByPlatformApplicationIterable;
+import software.amazon.awssdk.services.sns.paginators.ListPlatformApplicationsIterable;
+import software.amazon.awssdk.services.sns.paginators.ListSubscriptionsByTopicIterable;
+import software.amazon.awssdk.services.sns.paginators.ListSubscriptionsIterable;
+import software.amazon.awssdk.services.sns.paginators.ListTopicsIterable;
 
 abstract class AmazonSNSExtendedClientBase implements SnsClient {
-    private final SnsClient amazonSNSToBeExtended;
+    private final SnsClient snsClientToBeExtended;
 
-    public AmazonSNSExtendedClientBase(SnsClient amazonSNSToBeExtended) {
-        this.amazonSNSToBeExtended = amazonSNSToBeExtended;
+    public AmazonSNSExtendedClientBase(SnsClient snsClientToBeExtended) {
+        this.snsClientToBeExtended = snsClientToBeExtended;
     }
 
     /**
@@ -20,15 +26,9 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * href="https://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html">Using Amazon SNS Mobile Push
      * Notifications</a>.
      * </p>
-     * <br/>
-     * <p>
-     * This is a convenience which creates an instance of the {@link GetEndpointAttributesRequest.Builder} avoiding the
-     * need to create one manually via {@link GetEndpointAttributesRequest#builder()}
-     * </p>
      *
      * @param getEndpointAttributesRequest
-     *        A {@link Consumer} that will call methods on {@link GetEndpointAttributesInput.Builder} to create a
-     *        request. Input for GetEndpointAttributes action.
+     *        Input for GetEndpointAttributes action.
      * @return Result of the GetEndpointAttributes operation returned by the service.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
@@ -43,8 +43,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public GetEndpointAttributesResponse getEndpointAttributes(GetEndpointAttributesRequest getEndpointAttributesRequest) {
-        return amazonSNSToBeExtended.getEndpointAttributes(getEndpointAttributesRequest);
+    public GetEndpointAttributesResponse getEndpointAttributes(GetEndpointAttributesRequest getEndpointAttributesRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.getEndpointAttributes(getEndpointAttributesRequest);
     }
 
     /**
@@ -68,8 +70,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public AddPermissionResponse addPermission(AddPermissionRequest addPermissionRequest) {
-        return amazonSNSToBeExtended.addPermission(addPermissionRequest);
+    public AddPermissionResponse addPermission(AddPermissionRequest addPermissionRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, NotFoundException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.addPermission(addPermissionRequest);
     }
 
     /**
@@ -97,8 +101,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public CheckIfPhoneNumberIsOptedOutResponse checkIfPhoneNumberIsOptedOut(CheckIfPhoneNumberIsOptedOutRequest checkIfPhoneNumberIsOptedOutRequest) {
-        return amazonSNSToBeExtended.checkIfPhoneNumberIsOptedOut(checkIfPhoneNumberIsOptedOutRequest);
+    public CheckIfPhoneNumberIsOptedOutResponse checkIfPhoneNumberIsOptedOut(CheckIfPhoneNumberIsOptedOutRequest checkIfPhoneNumberIsOptedOutRequest) throws ThrottledException,
+            InternalErrorException, AuthorizationErrorException, InvalidParameterException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.checkIfPhoneNumberIsOptedOut(checkIfPhoneNumberIsOptedOutRequest);
     }
 
     /**
@@ -127,8 +133,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public ConfirmSubscriptionResponse confirmSubscription(ConfirmSubscriptionRequest confirmSubscriptionRequest) {
-        return amazonSNSToBeExtended.confirmSubscription(confirmSubscriptionRequest);
+    public ConfirmSubscriptionResponse confirmSubscription(ConfirmSubscriptionRequest confirmSubscriptionRequest)
+            throws SubscriptionLimitExceededException, InvalidParameterException, NotFoundException, InternalErrorException,
+            AuthorizationErrorException, FilterPolicyLimitExceededException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.confirmSubscription(confirmSubscriptionRequest);
     }
 
     /**
@@ -198,8 +207,9 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public CreatePlatformApplicationResponse createPlatformApplication(CreatePlatformApplicationRequest createPlatformApplicationRequest) {
-        return amazonSNSToBeExtended.createPlatformApplication(createPlatformApplicationRequest);
+    public CreatePlatformApplicationResponse createPlatformApplication(CreatePlatformApplicationRequest createPlatformApplicationRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.createPlatformApplication(createPlatformApplicationRequest);
     }
 
     /**
@@ -236,8 +246,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public CreatePlatformEndpointResponse createPlatformEndpoint(CreatePlatformEndpointRequest createPlatformEndpointRequest) {
-        return amazonSNSToBeExtended.createPlatformEndpoint(createPlatformEndpointRequest);
+    public CreatePlatformEndpointResponse createPlatformEndpoint(CreatePlatformEndpointRequest createPlatformEndpointRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.createPlatformEndpoint(createPlatformEndpointRequest);
     }
 
     /**
@@ -270,8 +282,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public CreateTopicResponse createTopic(CreateTopicRequest createTopicRequest) {
-        return amazonSNSToBeExtended.createTopic(createTopicRequest);
+    public CreateTopicResponse createTopic(CreateTopicRequest createTopicRequest) throws InvalidParameterException,
+            TopicLimitExceededException, InternalErrorException, AuthorizationErrorException, InvalidSecurityException,
+            TagLimitExceededException, StaleTagException, TagPolicyException, ConcurrentAccessException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.createTopic(createTopicRequest);
     }
 
     /**
@@ -299,8 +314,9 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public DeleteEndpointResponse deleteEndpoint(DeleteEndpointRequest deleteEndpointRequest) {
-        return amazonSNSToBeExtended.deleteEndpoint(deleteEndpointRequest);
+    public DeleteEndpointResponse deleteEndpoint(DeleteEndpointRequest deleteEndpointRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.deleteEndpoint(deleteEndpointRequest);
     }
 
     /**
@@ -325,8 +341,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public DeletePlatformApplicationResponse deletePlatformApplication(DeletePlatformApplicationRequest deletePlatformApplicationRequest) {
-        return amazonSNSToBeExtended.deletePlatformApplication(deletePlatformApplicationRequest);
+    public DeletePlatformApplicationResponse deletePlatformApplication(
+            DeletePlatformApplicationRequest deletePlatformApplicationRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.deletePlatformApplication(deletePlatformApplicationRequest);
     }
 
     /**
@@ -355,8 +373,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public DeleteTopicResponse deleteTopic(DeleteTopicRequest deleteTopicRequest) {
-        return amazonSNSToBeExtended.deleteTopic(deleteTopicRequest);
+    public DeleteTopicResponse deleteTopic(DeleteTopicRequest deleteTopicRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, NotFoundException, StaleTagException, TagPolicyException,
+            ConcurrentAccessException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.deleteTopic(deleteTopicRequest);
     }
 
     /**
@@ -382,8 +402,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public GetPlatformApplicationAttributesResponse getPlatformApplicationAttributes(GetPlatformApplicationAttributesRequest getPlatformApplicationAttributesRequest) {
-        return amazonSNSToBeExtended.getPlatformApplicationAttributes(getPlatformApplicationAttributesRequest);
+    public GetPlatformApplicationAttributesResponse getPlatformApplicationAttributes(
+            GetPlatformApplicationAttributesRequest getPlatformApplicationAttributesRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, NotFoundException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.getPlatformApplicationAttributes(getPlatformApplicationAttributesRequest);
     }
 
     /**
@@ -410,8 +433,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public GetSmsAttributesResponse getSMSAttributes(GetSmsAttributesRequest getSMSAttributesRequest) {
-        return amazonSNSToBeExtended.getSMSAttributes(getSMSAttributesRequest);
+    public GetSmsAttributesResponse getSMSAttributes(GetSmsAttributesRequest getSMSAttributesRequest) throws ThrottledException,
+            InternalErrorException, AuthorizationErrorException, InvalidParameterException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.getSMSAttributes(getSMSAttributesRequest);
     }
 
     /**
@@ -434,8 +459,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public GetSubscriptionAttributesResponse getSubscriptionAttributes(GetSubscriptionAttributesRequest getSubscriptionAttributesRequest) {
-        return amazonSNSToBeExtended.getSubscriptionAttributes(getSubscriptionAttributesRequest);
+    public GetSubscriptionAttributesResponse getSubscriptionAttributes(
+            GetSubscriptionAttributesRequest getSubscriptionAttributesRequest) throws InvalidParameterException,
+            InternalErrorException, NotFoundException, AuthorizationErrorException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.getSubscriptionAttributes(getSubscriptionAttributesRequest);
     }
 
     /**
@@ -461,8 +489,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public GetTopicAttributesResponse getTopicAttributes(GetTopicAttributesRequest getTopicAttributesRequest) {
-        return amazonSNSToBeExtended.getTopicAttributes(getTopicAttributesRequest);
+    public GetTopicAttributesResponse getTopicAttributes(GetTopicAttributesRequest getTopicAttributesRequest)
+            throws InvalidParameterException, InternalErrorException, NotFoundException, AuthorizationErrorException,
+            InvalidSecurityException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.getTopicAttributes(getTopicAttributesRequest);
     }
 
     /**
@@ -495,8 +525,112 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public ListEndpointsByPlatformApplicationResponse listEndpointsByPlatformApplication(ListEndpointsByPlatformApplicationRequest listEndpointsByPlatformApplicationRequest) {
-        return amazonSNSToBeExtended.listEndpointsByPlatformApplication(listEndpointsByPlatformApplicationRequest);
+    public ListEndpointsByPlatformApplicationResponse listEndpointsByPlatformApplication(
+            ListEndpointsByPlatformApplicationRequest listEndpointsByPlatformApplicationRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listEndpointsByPlatformApplication(listEndpointsByPlatformApplicationRequest);
+    }
+
+    /**
+     * <p>
+     * Lists the endpoints and endpoint attributes for devices in a supported push notification service, such as GCM
+     * (Firebase Cloud Messaging) and APNS. The results for <code>ListEndpointsByPlatformApplication</code> are
+     * paginated and return a limited list of endpoints, up to 100. If additional records are available after the first
+     * page results, then a NextToken string will be returned. To receive the next page, you call
+     * <code>ListEndpointsByPlatformApplication</code> again using the NextToken string received from the previous call.
+     * When there are no more records to return, NextToken will be null. For more information, see <a
+     * href="https://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html">Using Amazon SNS Mobile Push
+     * Notifications</a>.
+     * </p>
+     * <p>
+     * This action is throttled at 30 transactions per second (TPS).
+     * </p>
+     * <br/>
+     * <p>
+     * This is a variant of
+     * {@link #listEndpointsByPlatformApplication(software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationRequest)}
+     * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
+     * internally handle making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListEndpointsByPlatformApplicationIterable responses = client.listEndpointsByPlatformApplicationPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.sns.paginators.ListEndpointsByPlatformApplicationIterable responses = client
+     *             .listEndpointsByPlatformApplicationPaginator(request);
+     *     for (software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListEndpointsByPlatformApplicationIterable responses = client.listEndpointsByPlatformApplicationPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Please notice that the configuration of null won't limit the number of results you get with the paginator. It
+     * only limits the number of results in each page.</b>
+     * </p>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #listEndpointsByPlatformApplication(software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationRequest)}
+     * operation.</b>
+     * </p>
+     *
+     * @param listEndpointsByPlatformApplicationRequest
+     *        Input for ListEndpointsByPlatformApplication action.
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws InvalidParameterException
+     *         Indicates that a request parameter does not comply with the associated constraints.
+     * @throws InternalErrorException
+     *         Indicates an internal service error.
+     * @throws AuthorizationErrorException
+     *         Indicates that the user has been denied access to the requested resource.
+     * @throws NotFoundException
+     *         Indicates that the requested resource does not exist.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample SnsClient.ListEndpointsByPlatformApplication
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication"
+     *      target="_top">AWS API Documentation</a>
+     */
+    @Override
+    public ListEndpointsByPlatformApplicationIterable listEndpointsByPlatformApplicationPaginator(
+            ListEndpointsByPlatformApplicationRequest listEndpointsByPlatformApplicationRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listEndpointsByPlatformApplicationPaginator(listEndpointsByPlatformApplicationRequest);
     }
 
     /**
@@ -527,8 +661,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public ListPhoneNumbersOptedOutResponse listPhoneNumbersOptedOut(ListPhoneNumbersOptedOutRequest listPhoneNumbersOptedOutRequest) {
-        return amazonSNSToBeExtended.listPhoneNumbersOptedOut(listPhoneNumbersOptedOutRequest);
+    public ListPhoneNumbersOptedOutResponse listPhoneNumbersOptedOut(
+            ListPhoneNumbersOptedOutRequest listPhoneNumbersOptedOutRequest) throws ThrottledException, InternalErrorException,
+            AuthorizationErrorException, InvalidParameterException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listPhoneNumbersOptedOut(listPhoneNumbersOptedOutRequest);
     }
 
     /**
@@ -560,8 +696,108 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public ListPlatformApplicationsResponse listPlatformApplications(ListPlatformApplicationsRequest listPlatformApplicationsRequest) {
-        return amazonSNSToBeExtended.listPlatformApplications(listPlatformApplicationsRequest);
+    public ListPlatformApplicationsResponse listPlatformApplications(
+            ListPlatformApplicationsRequest listPlatformApplicationsRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listPlatformApplications(listPlatformApplicationsRequest);
+    }
+
+    /**
+     * <p>
+     * Lists the platform application objects for the supported push notification services, such as APNS and GCM
+     * (Firebase Cloud Messaging). The results for <code>ListPlatformApplications</code> are paginated and return a
+     * limited list of applications, up to 100. If additional records are available after the first page results, then a
+     * NextToken string will be returned. To receive the next page, you call <code>ListPlatformApplications</code> using
+     * the NextToken string received from the previous call. When there are no more records to return,
+     * <code>NextToken</code> will be null. For more information, see <a
+     * href="https://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html">Using Amazon SNS Mobile Push
+     * Notifications</a>.
+     * </p>
+     * <p>
+     * This action is throttled at 15 transactions per second (TPS).
+     * </p>
+     * <br/>
+     * <p>
+     * This is a variant of
+     * {@link #listPlatformApplications(software.amazon.awssdk.services.sns.model.ListPlatformApplicationsRequest)}
+     * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
+     * internally handle making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListPlatformApplicationsIterable responses = client.listPlatformApplicationsPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.sns.paginators.ListPlatformApplicationsIterable responses = client
+     *             .listPlatformApplicationsPaginator(request);
+     *     for (software.amazon.awssdk.services.sns.model.ListPlatformApplicationsResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListPlatformApplicationsIterable responses = client.listPlatformApplicationsPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Please notice that the configuration of null won't limit the number of results you get with the paginator. It
+     * only limits the number of results in each page.</b>
+     * </p>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #listPlatformApplications(software.amazon.awssdk.services.sns.model.ListPlatformApplicationsRequest)}
+     * operation.</b>
+     * </p>
+     *
+     * @param listPlatformApplicationsRequest
+     *        Input for ListPlatformApplications action.
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws InvalidParameterException
+     *         Indicates that a request parameter does not comply with the associated constraints.
+     * @throws InternalErrorException
+     *         Indicates an internal service error.
+     * @throws AuthorizationErrorException
+     *         Indicates that the user has been denied access to the requested resource.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample SnsClient.ListPlatformApplications
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications" target="_top">AWS
+     *      API Documentation</a>
+     */
+    @Override
+    public ListPlatformApplicationsIterable listPlatformApplicationsPaginator(
+            ListPlatformApplicationsRequest listPlatformApplicationsRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listPlatformApplicationsPaginator(listPlatformApplicationsRequest);
     }
 
     /**
@@ -588,8 +824,102 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public ListSubscriptionsResponse listSubscriptions(ListSubscriptionsRequest listSubscriptionsRequest) {
-        return amazonSNSToBeExtended.listSubscriptions(listSubscriptionsRequest);
+    public ListSubscriptionsResponse listSubscriptions(ListSubscriptionsRequest listSubscriptionsRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.listSubscriptions(listSubscriptionsRequest);
+    }
+
+    /**
+     * <p>
+     * Returns a list of the requester's subscriptions. Each call returns a limited list of subscriptions, up to 100. If
+     * there are more subscriptions, a <code>NextToken</code> is also returned. Use the <code>NextToken</code> parameter
+     * in a new <code>ListSubscriptions</code> call to get further results.
+     * </p>
+     * <p>
+     * This action is throttled at 30 transactions per second (TPS).
+     * </p>
+     * <br/>
+     * <p>
+     * This is a variant of
+     * {@link #listSubscriptions(software.amazon.awssdk.services.sns.model.ListSubscriptionsRequest)} operation. The
+     * return type is a custom iterable that can be used to iterate through all the pages. SDK will internally handle
+     * making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListSubscriptionsIterable responses = client.listSubscriptionsPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.sns.paginators.ListSubscriptionsIterable responses = client
+     *             .listSubscriptionsPaginator(request);
+     *     for (software.amazon.awssdk.services.sns.model.ListSubscriptionsResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListSubscriptionsIterable responses = client.listSubscriptionsPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Please notice that the configuration of null won't limit the number of results you get with the paginator. It
+     * only limits the number of results in each page.</b>
+     * </p>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #listSubscriptions(software.amazon.awssdk.services.sns.model.ListSubscriptionsRequest)} operation.</b>
+     * </p>
+     *
+     * @param listSubscriptionsRequest
+     *        Input for ListSubscriptions action.
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws InvalidParameterException
+     *         Indicates that a request parameter does not comply with the associated constraints.
+     * @throws InternalErrorException
+     *         Indicates an internal service error.
+     * @throws AuthorizationErrorException
+     *         Indicates that the user has been denied access to the requested resource.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample SnsClient.ListSubscriptions
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions" target="_top">AWS API
+     *      Documentation</a>
+     */
+    @Override
+    public ListSubscriptionsIterable listSubscriptionsPaginator(ListSubscriptionsRequest listSubscriptionsRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.listSubscriptionsPaginator(listSubscriptionsRequest);
     }
 
     /**
@@ -617,8 +947,107 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public ListSubscriptionsByTopicResponse listSubscriptionsByTopic(ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest) {
-        return amazonSNSToBeExtended.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
+    public ListSubscriptionsByTopicResponse listSubscriptionsByTopic(
+            ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest) throws InvalidParameterException,
+            InternalErrorException, NotFoundException, AuthorizationErrorException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
+    }
+
+    /**
+     * <p>
+     * Returns a list of the subscriptions to a specific topic. Each call returns a limited list of subscriptions, up to
+     * 100. If there are more subscriptions, a <code>NextToken</code> is also returned. Use the <code>NextToken</code>
+     * parameter in a new <code>ListSubscriptionsByTopic</code> call to get further results.
+     * </p>
+     * <p>
+     * This action is throttled at 30 transactions per second (TPS).
+     * </p>
+     * <br/>
+     * <p>
+     * This is a variant of
+     * {@link #listSubscriptionsByTopic(software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicRequest)}
+     * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
+     * internally handle making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListSubscriptionsByTopicIterable responses = client.listSubscriptionsByTopicPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.sns.paginators.ListSubscriptionsByTopicIterable responses = client
+     *             .listSubscriptionsByTopicPaginator(request);
+     *     for (software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListSubscriptionsByTopicIterable responses = client.listSubscriptionsByTopicPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Please notice that the configuration of null won't limit the number of results you get with the paginator. It
+     * only limits the number of results in each page.</b>
+     * </p>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #listSubscriptionsByTopic(software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicRequest)}
+     * operation.</b>
+     * </p>
+     *
+     * @param listSubscriptionsByTopicRequest
+     *        Input for ListSubscriptionsByTopic action.
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws InvalidParameterException
+     *         Indicates that a request parameter does not comply with the associated constraints.
+     * @throws InternalErrorException
+     *         Indicates an internal service error.
+     * @throws NotFoundException
+     *         Indicates that the requested resource does not exist.
+     * @throws AuthorizationErrorException
+     *         Indicates that the user has been denied access to the requested resource.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample SnsClient.ListSubscriptionsByTopic
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic" target="_top">AWS
+     *      API Documentation</a>
+     */
+    @Override
+    public ListSubscriptionsByTopicIterable listSubscriptionsByTopicPaginator(
+            ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest) throws InvalidParameterException,
+            InternalErrorException, NotFoundException, AuthorizationErrorException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.listSubscriptionsByTopicPaginator(listSubscriptionsByTopicRequest);
     }
 
     /**
@@ -645,8 +1074,97 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public ListTopicsResponse listTopics(ListTopicsRequest listTopicsRequest) {
-        return amazonSNSToBeExtended.listTopics(listTopicsRequest);
+    public ListTopicsResponse listTopics(ListTopicsRequest listTopicsRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listTopics(listTopicsRequest);
+    }
+
+    /**
+     * <p>
+     * Returns a list of the requester's topics. Each call returns a limited list of topics, up to 100. If there are
+     * more topics, a <code>NextToken</code> is also returned. Use the <code>NextToken</code> parameter in a new
+     * <code>ListTopics</code> call to get further results.
+     * </p>
+     * <p>
+     * This action is throttled at 30 transactions per second (TPS).
+     * </p>
+     * <br/>
+     * <p>
+     * This is a variant of {@link #listTopics(software.amazon.awssdk.services.sns.model.ListTopicsRequest)} operation.
+     * The return type is a custom iterable that can be used to iterate through all the pages. SDK will internally
+     * handle making service calls for you.
+     * </p>
+     * <p>
+     * When this operation is called, a custom iterable is returned but no service calls are made yet. So there is no
+     * guarantee that the request is valid. As you iterate through the iterable, SDK will start lazily loading response
+     * pages by making service calls until there are no pages left or your iteration stops. If there are errors in your
+     * request, you will see the failures only after you start iterating through the iterable.
+     * </p>
+     *
+     * <p>
+     * The following are few ways to iterate through the response pages:
+     * </p>
+     * 1) Using a Stream
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListTopicsIterable responses = client.listTopicsPaginator(request);
+     * responses.stream().forEach(....);
+     * }
+     * </pre>
+     *
+     * 2) Using For loop
+     *
+     * <pre>
+     * {
+     *     &#064;code
+     *     software.amazon.awssdk.services.sns.paginators.ListTopicsIterable responses = client.listTopicsPaginator(request);
+     *     for (software.amazon.awssdk.services.sns.model.ListTopicsResponse response : responses) {
+     *         // do something;
+     *     }
+     * }
+     * </pre>
+     *
+     * 3) Use iterator directly
+     *
+     * <pre>
+     * {@code
+     * software.amazon.awssdk.services.sns.paginators.ListTopicsIterable responses = client.listTopicsPaginator(request);
+     * responses.iterator().forEachRemaining(....);
+     * }
+     * </pre>
+     * <p>
+     * <b>Please notice that the configuration of null won't limit the number of results you get with the paginator. It
+     * only limits the number of results in each page.</b>
+     * </p>
+     * <p>
+     * <b>Note: If you prefer to have control on service calls, use the
+     * {@link #listTopics(software.amazon.awssdk.services.sns.model.ListTopicsRequest)} operation.</b>
+     * </p>
+     *
+     * @param listTopicsRequest
+     * @return A custom iterable that can be used to iterate through all the response pages.
+     * @throws InvalidParameterException
+     *         Indicates that a request parameter does not comply with the associated constraints.
+     * @throws InternalErrorException
+     *         Indicates an internal service error.
+     * @throws AuthorizationErrorException
+     *         Indicates that the user has been denied access to the requested resource.
+     * @throws SdkException
+     *         Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *         catch all scenarios.
+     * @throws SdkClientException
+     *         If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws SnsException
+     *         Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @sample SnsClient.ListTopics
+     * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics" target="_top">AWS API
+     *      Documentation</a>
+     */
+    @Override
+    public ListTopicsIterable listTopicsPaginator(ListTopicsRequest listTopicsRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listTopicsPaginator(listTopicsRequest);
     }
 
     /**
@@ -674,8 +1192,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public OptInPhoneNumberResponse optInPhoneNumber(OptInPhoneNumberRequest optInPhoneNumberRequest) {
-        return amazonSNSToBeExtended.optInPhoneNumber(optInPhoneNumberRequest);
+    public OptInPhoneNumberResponse optInPhoneNumber(OptInPhoneNumberRequest optInPhoneNumberRequest) throws ThrottledException,
+            InternalErrorException, AuthorizationErrorException, InvalidParameterException, AwsServiceException,
+            SdkClientException, SnsException {
+        return snsClientToBeExtended.optInPhoneNumber(optInPhoneNumberRequest);
     }
 
     /**
@@ -738,8 +1258,12 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public PublishResponse publish(PublishRequest publishRequest) {
-        return amazonSNSToBeExtended.publish(publishRequest);
+    public PublishResponse publish(PublishRequest publishRequest) throws InvalidParameterException,
+            InvalidParameterValueException, InternalErrorException, NotFoundException, EndpointDisabledException,
+            PlatformApplicationDisabledException, AuthorizationErrorException, KmsDisabledException, KmsInvalidStateException,
+            KmsNotFoundException, KmsOptInRequiredException, KmsThrottlingException, KmsAccessDeniedException,
+            InvalidSecurityException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.publish(publishRequest);
     }
 
     /**
@@ -762,8 +1286,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public RemovePermissionResponse removePermission(RemovePermissionRequest removePermissionRequest) {
-        return amazonSNSToBeExtended.removePermission(removePermissionRequest);
+    public RemovePermissionResponse removePermission(RemovePermissionRequest removePermissionRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.removePermission(removePermissionRequest);
     }
 
     /**
@@ -789,8 +1315,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public SetEndpointAttributesResponse setEndpointAttributes(SetEndpointAttributesRequest setEndpointAttributesRequest) {
-        return amazonSNSToBeExtended.setEndpointAttributes(setEndpointAttributesRequest);
+    public SetEndpointAttributesResponse setEndpointAttributes(SetEndpointAttributesRequest setEndpointAttributesRequest)
+            throws InvalidParameterException, InternalErrorException, AuthorizationErrorException, NotFoundException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.setEndpointAttributes(setEndpointAttributesRequest);
     }
 
     /**
@@ -818,8 +1346,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * target="_top">AWS API Documentation</a>
      */
     @Override
-    public SetPlatformApplicationAttributesResponse setPlatformApplicationAttributes(SetPlatformApplicationAttributesRequest setPlatformApplicationAttributesRequest) {
-        return amazonSNSToBeExtended.setPlatformApplicationAttributes(setPlatformApplicationAttributesRequest);
+    public SetPlatformApplicationAttributesResponse setPlatformApplicationAttributes(
+            SetPlatformApplicationAttributesRequest setPlatformApplicationAttributesRequest) throws InvalidParameterException,
+            InternalErrorException, AuthorizationErrorException, NotFoundException, AwsServiceException, SdkClientException,
+            SnsException {
+        return snsClientToBeExtended.setPlatformApplicationAttributes(setPlatformApplicationAttributesRequest);
     }
 
     /**
@@ -849,8 +1380,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public SetSmsAttributesResponse setSMSAttributes(SetSmsAttributesRequest setSMSAttributesRequest) {
-        return amazonSNSToBeExtended.setSMSAttributes(setSMSAttributesRequest);
+    public SetSmsAttributesResponse setSMSAttributes(SetSmsAttributesRequest setSMSAttributesRequest)
+            throws InvalidParameterException, ThrottledException, InternalErrorException, AuthorizationErrorException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.setSMSAttributes(setSMSAttributesRequest);
     }
 
     /**
@@ -875,8 +1408,11 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * API Documentation</a>
      */
     @Override
-    public SetSubscriptionAttributesResponse setSubscriptionAttributes(SetSubscriptionAttributesRequest setSubscriptionAttributesRequest) {
-        return amazonSNSToBeExtended.setSubscriptionAttributes(setSubscriptionAttributesRequest);
+    public SetSubscriptionAttributesResponse setSubscriptionAttributes(
+            SetSubscriptionAttributesRequest setSubscriptionAttributesRequest) throws InvalidParameterException,
+            FilterPolicyLimitExceededException, InternalErrorException, NotFoundException, AuthorizationErrorException,
+            AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.setSubscriptionAttributes(setSubscriptionAttributesRequest);
     }
 
     /**
@@ -901,8 +1437,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public SetTopicAttributesResponse setTopicAttributes(SetTopicAttributesRequest setTopicAttributesRequest) {
-        return amazonSNSToBeExtended.setTopicAttributes(setTopicAttributesRequest);
+    public SetTopicAttributesResponse setTopicAttributes(SetTopicAttributesRequest setTopicAttributesRequest)
+            throws InvalidParameterException, InternalErrorException, NotFoundException, AuthorizationErrorException,
+            InvalidSecurityException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.setTopicAttributes(setTopicAttributesRequest);
     }
 
     /**
@@ -939,8 +1477,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public SubscribeResponse subscribe(SubscribeRequest subscribeRequest) {
-        return amazonSNSToBeExtended.subscribe(subscribeRequest);
+    public SubscribeResponse subscribe(SubscribeRequest subscribeRequest) throws SubscriptionLimitExceededException,
+            FilterPolicyLimitExceededException, InvalidParameterException, InternalErrorException, NotFoundException,
+            AuthorizationErrorException, InvalidSecurityException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.subscribe(subscribeRequest);
     }
 
     /**
@@ -972,8 +1512,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Documentation</a>
      */
     @Override
-    public UnsubscribeResponse unsubscribe(UnsubscribeRequest unsubscribeRequest) {
-        return amazonSNSToBeExtended.unsubscribe(unsubscribeRequest);
+    public UnsubscribeResponse unsubscribe(UnsubscribeRequest unsubscribeRequest) throws InvalidParameterException,
+        InternalErrorException, AuthorizationErrorException, NotFoundException, InvalidSecurityException,
+        AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.unsubscribe(unsubscribeRequest);
     }
 
     /**
@@ -998,8 +1540,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTagsForResource" target="_top">AWS API
      *      Documentation</a>     */
     @Override
-    public ListTagsForResourceResponse listTagsForResource(ListTagsForResourceRequest listTagsForResourceRequest) {
-        return amazonSNSToBeExtended.listTagsForResource(listTagsForResourceRequest);
+    public ListTagsForResourceResponse listTagsForResource(ListTagsForResourceRequest listTagsForResourceRequest)
+            throws ResourceNotFoundException, TagPolicyException, InvalidParameterException, AuthorizationErrorException,
+            ConcurrentAccessException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.listTagsForResource(listTagsForResourceRequest);
     }
 
     /**
@@ -1060,8 +1604,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/TagResource" target="_top">AWS API
      *      Documentation</a>     */
     @Override
-    public TagResourceResponse tagResource(TagResourceRequest tagResourceRequest) {
-        return amazonSNSToBeExtended.tagResource(tagResourceRequest);
+    public TagResourceResponse tagResource(TagResourceRequest tagResourceRequest) throws ResourceNotFoundException,
+            TagLimitExceededException, StaleTagException, TagPolicyException, InvalidParameterException,
+            AuthorizationErrorException, ConcurrentAccessException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.tagResource(tagResourceRequest);
     }
 
     /**
@@ -1089,17 +1635,19 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * @see <a href="http://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/UntagResource" target="_top">AWS API
      *      Documentation</a>     */
     @Override
-    public UntagResourceResponse untagResource(UntagResourceRequest untagResourceRequest) {
-        return amazonSNSToBeExtended.untagResource(untagResourceRequest);
+    public UntagResourceResponse untagResource(UntagResourceRequest untagResourceRequest) throws ResourceNotFoundException,
+        TagLimitExceededException, StaleTagException, TagPolicyException, InvalidParameterException,
+        AuthorizationErrorException, ConcurrentAccessException, AwsServiceException, SdkClientException, SnsException {
+        return snsClientToBeExtended.untagResource(untagResourceRequest);
     }
 
     @Override
     public String serviceName() {
-        return amazonSNSToBeExtended.serviceName();
+        return snsClientToBeExtended.serviceName();
     }
 
     @Override
     public void close() {
-        amazonSNSToBeExtended.close();
+        snsClientToBeExtended.close();
     }
 }
