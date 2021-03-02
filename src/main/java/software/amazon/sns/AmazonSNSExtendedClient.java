@@ -17,6 +17,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
 
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
+    private static final String S3_KEY = "S3Key";
     private static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
     private PayloadStore payloadStore;
     private SNSExtendedClientConfiguration snsExtendedClientConfiguration;
@@ -190,12 +191,21 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         return messageAttributeSize;
     }
 
+    private static String getS3keyAttribute(Map<String, MessageAttributeValue> messageAttributes) {
+        if (messageAttributes != null && messageAttributes.containsKey(S3_KEY)) {
+            MessageAttributeValue attributeS3KeyValue = messageAttributes.get(S3_KEY);
+            return (attributeS3KeyValue == null) ? null : attributeS3KeyValue.getStringValue();
+        }
+        return null;
+    }
+
     private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
         String messageContentStr = publishRequest.getMessage();
         Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
+        String s3Key = getS3keyAttribute(publishRequest.getMessageAttributes()) ;
 
         String largeMessagePointer = payloadStore.storeOriginalPayload(messageContentStr,
-                messageContentSize);
+                messageContentSize, s3Key);
         publishRequest.setMessage(largeMessagePointer);
 
         MessageAttributeValue messageAttributeValue = new MessageAttributeValue();
