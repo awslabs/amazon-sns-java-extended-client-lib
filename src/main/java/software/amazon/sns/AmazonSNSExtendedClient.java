@@ -44,6 +44,28 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     }
 
     /**
+     * Constructs a new Amazon SNS extended client to invoke service methods on
+     * Amazon SNS with extended functionality using the specified Amazon SNS
+     * client object and Payload Store object.
+     * <p>
+     * <p>
+     * All service calls made using this new client object are blocking, and
+     * will not return until the service call completes.
+     *
+     * @param snsClient                   The Amazon SNS client to use to connect to Amazon SNS.
+     * @param snsExtendedClientConfiguration The sns extended client configuration options controlling the
+     *                                    functionality of this client.
+     * @param payloadStore                The Payload Store that handles logic for saving to the desired
+     *                                    extended storage.
+     */
+    public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration, PayloadStore payloadStore) {
+        super(snsClient);
+
+        this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
+        this.payloadStore = payloadStore;
+    }
+
+    /**
      * <p>
      * Sends a message to an Amazon SNS topic or sends a text message (SMS message) directly to a phone number.
      * </p>
