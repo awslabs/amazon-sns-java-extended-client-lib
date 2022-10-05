@@ -256,7 +256,6 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         messageAttributeValueBuilder.stringValue(messageContentSize.toString());
         MessageAttributeValue messageAttributeValue = messageAttributeValueBuilder.build();
 
-
         Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
         attributes.put(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
         publishRequestBuilder.messageAttributes(attributes);
