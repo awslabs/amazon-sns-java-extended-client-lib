@@ -1,8 +1,8 @@
 package software.amazon.sns;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.SSEAwsKeyManagementParams;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.payloadoffloading.PayloadStorageConfiguration;
+import software.amazon.payloadoffloading.ServerSideEncryptionStrategy;
 
 public class SNSExtendedClientConfiguration extends PayloadStorageConfiguration {
     static final int SNS_DEFAULT_MESSAGE_SIZE = 262144;
@@ -23,14 +23,14 @@ public class SNSExtendedClientConfiguration extends PayloadStorageConfiguration 
     }
 
     @Override
-    public SNSExtendedClientConfiguration withPayloadSupportEnabled(AmazonS3 s3, String s3BucketName) {
+    public SNSExtendedClientConfiguration withPayloadSupportEnabled(S3Client s3, String s3BucketName) {
         this.setPayloadSupportEnabled(s3, s3BucketName);
         return this;
     }
 
     @Override
-    public SNSExtendedClientConfiguration withSSEAwsKeyManagementParams(SSEAwsKeyManagementParams sseAwsKeyManagementParams) {
-        this.setSSEAwsKeyManagementParams(sseAwsKeyManagementParams);
+    public SNSExtendedClientConfiguration withServerSideEncryption(ServerSideEncryptionStrategy serverSideEncryptionStrategy) {
+        this.setServerSideEncryptionStrategy(serverSideEncryptionStrategy);
         return this;
     }
 
