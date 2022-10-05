@@ -48,6 +48,28 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     }
 
     /**
+     * Constructs a new Amazon SNS extended client to invoke service methods on
+     * Amazon SNS with extended functionality using the specified Amazon SNS
+     * client object and Payload Store object.
+     * <p>
+     * <p>
+     * All service calls made using this new client object are blocking, and
+     * will not return until the service call completes.
+     *
+     * @param snsClient                   The Amazon SNS client to use to connect to Amazon SNS.
+     * @param snsExtendedClientConfiguration The sns extended client configuration options controlling the
+     *                                    functionality of this client.
+     * @param payloadStore                The Payload Store that handles logic for saving to the desired
+     *                                    extended storage.
+     */
+    public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration, PayloadStore payloadStore) {
+        super(snsClient);
+
+        this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
+        this.payloadStore = payloadStore;
+    }
+
+    /**
      * <p>
      * Sends a message to an Amazon SNS topic, a text message (SMS message) directly to a phone number, or a message to
      * a mobile platform endpoint (when you specify the <code>TargetArn</code>).
@@ -212,9 +234,18 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         return messageAttributeSize;
     }
 
+    private static String getS3keyAttribute(Map<String, MessageAttributeValue> messageAttributes) {
+        if (messageAttributes != null && messageAttributes.containsKey(S3_KEY)) {
+            MessageAttributeValue attributeS3KeyValue = messageAttributes.get(S3_KEY);
+            return (attributeS3KeyValue == null) ? null : attributeS3KeyValue.getStringValue();
+        }
+        return null;
+    }
+
     private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
         String messageContentStr = publishRequest.message();
         Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
+        String s3Key = getS3keyAttribute(publishRequest.getMessageAttributes()) ;
 
         PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
         String largeMessagePointer = payloadStore.storeOriginalPayload(messageContentStr);
@@ -224,6 +255,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         messageAttributeValueBuilder.dataType("Number");
         messageAttributeValueBuilder.stringValue(messageContentSize.toString());
         MessageAttributeValue messageAttributeValue = messageAttributeValueBuilder.build();
+
 
         Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
         attributes.put(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
