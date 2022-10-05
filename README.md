@@ -9,6 +9,8 @@ It saves the actual payload in S3 and publishes the reference of the stored S3 o
 * **Sign up for AWS** -- Before you begin, you need an AWS account. For more information about creating an AWS account, see [create and activate aws account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/).
 * **Minimum requirements** Java 8 (or later) and [Maven 3](http://maven.apache.org/).
 * **Download** -- Download the [latest preview release](https://github.com/awslabs/amazon-sns-java-extended-client-lib/releases) or pick it up from Maven:
+
+### Version 2.x (AWS Java SDKv2)
 ```xml
   <dependency>
     <groupId>software.amazon.sns</groupId>
@@ -17,6 +19,17 @@ It saves the actual payload in S3 and publishes the reference of the stored S3 o
     <type>jar</type>
   </dependency>
 ```
+
+### Version 1.x (AWS Java SDKv1)
+```xml
+  <dependency>
+    <groupId>software.amazon.sns</groupId>
+    <artifactId>sns-extended-client</artifactId>
+    <version>1.1.2</version>
+    <type>jar</type>
+  </dependency>
+```
+
 
 ## S3 Message Storage Configuration
 The library relies on the Payload Offloading Java Common Library for AWS for message storage and retrieval. The following S3 message storage configuration options are available:
