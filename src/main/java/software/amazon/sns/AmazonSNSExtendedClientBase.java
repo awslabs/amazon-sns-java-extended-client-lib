@@ -1139,4 +1139,83 @@ abstract class AmazonSNSExtendedClientBase implements AmazonSNS {
     public UntagResourceResult untagResource(UntagResourceRequest request) {
         return amazonSNSToBeExtended.untagResource(request);
     }
+
+    /**
+     * Adds a destination phone number to an AWS account in the SMS sandbox and sends a one-time password (OTP) to that
+     * phone number.
+     *
+     * @param request The originally executed request
+     * @return Result of the CreateSMSSandboxPhoneNumber operation returned by the service.
+     */
+    @Override
+    public CreateSMSSandboxPhoneNumberResult createSMSSandboxPhoneNumber(CreateSMSSandboxPhoneNumberRequest request) {
+        return amazonSNSToBeExtended.createSMSSandboxPhoneNumber(request);
+    }
+
+    /**
+     * Deletes an AWS account's verified or pending phone number from the SMS sandbox.
+     *
+     * @param request The originally executed request
+     * @return Result of the DeleteSMSSandboxPhoneNumber operation returned by the service.
+     */
+    @Override
+    public DeleteSMSSandboxPhoneNumberResult deleteSMSSandboxPhoneNumber(DeleteSMSSandboxPhoneNumberRequest request) {
+        return amazonSNSToBeExtended.deleteSMSSandboxPhoneNumber(request);
+    }
+
+    /**
+     * Retrieves the SMS sandbox status for the calling AWS account in the target AWS Region.
+     *
+     * @param request The originally executed request
+     * @return Result of the GetSMSSandboxAccountStatus operation returned by the service.
+     */
+    @Override
+    public GetSMSSandboxAccountStatusResult getSMSSandboxAccountStatus(GetSMSSandboxAccountStatusRequest request) {
+        return amazonSNSToBeExtended.getSMSSandboxAccountStatus(request);
+    }
+
+    /**
+     * Lists the calling AWS account's dedicated origination numbers and their metadata. For more information about
+     * origination numbers, see Origination numbers in the Amazon SNS Developer Guide.
+     *
+     * @param request The originally executed request
+     * @return Result of the ListOriginationNumbers operation returned by the service.
+     */
+    @Override
+    public ListOriginationNumbersResult listOriginationNumbers(ListOriginationNumbersRequest request) {
+        return amazonSNSToBeExtended.listOriginationNumbers(request);
+    }
+
+    /**
+     * Lists the calling AWS account's current verified and pending destination phone numbers in the SMS sandbox.
+     *
+     * @param request The originally executed request
+     * @return Result of the ListSMSSandboxPhoneNumbers operation returned by the service.
+     */
+    @Override
+    public ListSMSSandboxPhoneNumbersResult listSMSSandboxPhoneNumbers(ListSMSSandboxPhoneNumbersRequest request) {
+        return amazonSNSToBeExtended.listSMSSandboxPhoneNumbers(request);
+    }
+
+    /**
+     * Publishes up to ten messages to the specified topic. This is a batch version of Publish
+     *
+     * @param request
+     * @return Result of the PublishBatch operation returned by the service.
+     */
+    @Override
+    public PublishBatchResult publishBatch(PublishBatchRequest request) {
+        return amazonSNSToBeExtended.publishBatch(request);
+    }
+
+    /**
+     * Verifies a destination phone number with a one-time password (OTP) for the calling AWS account.
+     *
+     * @param request
+     * @return Result of the VerifySMSSandboxPhoneNumber operation returned by the service.
+     */
+    @Override
+    public VerifySMSSandboxPhoneNumberResult verifySMSSandboxPhoneNumber(VerifySMSSandboxPhoneNumberRequest request) {
+        return amazonSNSToBeExtended.verifySMSSandboxPhoneNumber(request);
+    }
 }
