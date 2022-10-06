@@ -73,20 +73,20 @@ public class AmazonSNSExtendedClientTest {
     public void testPublishLargeMessageS3IsUsedWithS3Key() {
         String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
 
-        PublishRequest publishRequest = new PublishRequest(SNS_TOPIC_ARN, messageBody);
+        PublishRequest.Builder publishRequestBuilder = PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody);
         HashMap<String, MessageAttributeValue> attrs = new HashMap<>();
-        attrs.put("S3Key", new MessageAttributeValue().withStringValue("value"));
-        publishRequest.setMessageAttributes(attrs);
-        extendedSnsWithDefaultConfig.publish(publishRequest);
+        attrs.put("S3Key", MessageAttributeValue.builder().stringValue("value").build());
+        publishRequestBuilder.messageAttributes(attrs);
+        extendedSnsWithDefaultConfig.publish(publishRequestBuilder.build());
 
-        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class));
+        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
         ArgumentCaptor<PublishRequest> publishRequestCaptor = ArgumentCaptor.forClass(PublishRequest.class);
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
-        Map<String, MessageAttributeValue> attributes = publishRequestCaptor.getValue().getMessageAttributes();
-        Assert.assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).getDataType());
+        Map<String, MessageAttributeValue> attributes = publishRequestCaptor.getValue().messageAttributes();
+        Assert.assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).dataType());
 
-        Assert.assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).getStringValue()));
+        Assert.assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).stringValue()));
     }
 
     @Test
