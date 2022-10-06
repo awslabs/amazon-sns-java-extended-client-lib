@@ -1,7 +1,5 @@
 package software.amazon.sns;
 
-import java.util.function.Consumer;
-
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.*;
 import software.amazon.awssdk.services.sns.SnsClient;

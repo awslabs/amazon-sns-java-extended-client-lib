@@ -21,8 +21,9 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
     static final String USER_AGENT_HEADER_NAME = "User-Agent";
     static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
-
+    
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
+    private static final String S3_KEY = "S3Key";
     private PayloadStore payloadStore;
     private SNSExtendedClientConfiguration snsExtendedClientConfiguration;
 
@@ -62,7 +63,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
      * @param payloadStore                The Payload Store that handles logic for saving to the desired
      *                                    extended storage.
      */
-    public AmazonSNSExtendedClient(AmazonSNS snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration, PayloadStore payloadStore) {
+    public AmazonSNSExtendedClient(SnsClient snsClient, SNSExtendedClientConfiguration snsExtendedClientConfiguration, PayloadStore payloadStore) {
         super(snsClient);
 
         this.snsExtendedClientConfiguration = snsExtendedClientConfiguration;
@@ -237,7 +238,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     private static String getS3keyAttribute(Map<String, MessageAttributeValue> messageAttributes) {
         if (messageAttributes != null && messageAttributes.containsKey(S3_KEY)) {
             MessageAttributeValue attributeS3KeyValue = messageAttributes.get(S3_KEY);
-            return (attributeS3KeyValue == null) ? null : attributeS3KeyValue.getStringValue();
+            return (attributeS3KeyValue == null) ? null : attributeS3KeyValue.stringValue();
         }
         return null;
     }
@@ -245,10 +246,10 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
     private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
         String messageContentStr = publishRequest.message();
         Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
-        String s3Key = getS3keyAttribute(publishRequest.getMessageAttributes()) ;
+        String s3Key = getS3keyAttribute(publishRequest.messageAttributes());
 
         PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
-        String largeMessagePointer = payloadStore.storeOriginalPayload(messageContentStr);
+        String largeMessagePointer = (s3Key != null)? payloadStore.storeOriginalPayload(messageContentStr, s3Key): payloadStore.storeOriginalPayload(messageContentStr);
         publishRequestBuilder.message(largeMessagePointer);
 
         MessageAttributeValue.Builder messageAttributeValueBuilder = MessageAttributeValue.builder();
