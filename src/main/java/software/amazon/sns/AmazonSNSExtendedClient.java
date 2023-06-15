@@ -275,10 +275,4 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         publishRequestBuilder.messageAttributes(attributes);
         return publishRequestBuilder.build();
     }
-
-    @Override
-    public void close() {
-        super.close();
-        this.snsExtendedClientConfiguration.getS3Client().close();
-    }
 }

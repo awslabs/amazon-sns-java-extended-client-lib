@@ -6,7 +6,7 @@
 
     <groupId>software.amazon.sns</groupId>
     <artifactId>sns-extended-client</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
     <name>Amazon SNS Extended Client Library for Java</name>
     <description>An extension to the Amazon SNS client that enables sending messages up to 2GB via Amazon S3.
