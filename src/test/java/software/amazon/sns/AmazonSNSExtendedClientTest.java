@@ -1,9 +1,8 @@
 package software.amazon.sns;
 
 import com.amazon.sqs.javamessaging.SQSExtendedClientConstants;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
@@ -22,9 +21,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AmazonSNSExtendedClientTest {
 
@@ -39,7 +46,7 @@ public class AmazonSNSExtendedClientTest {
     private SnsClient mockSnsBackend;
     private S3Client mockS3;
 
-    @Before
+    @BeforeEach
     public void setupClient() {
         mockS3 = mock(S3Client.class);
         mockSnsBackend = mock(SnsClient.class);
@@ -64,9 +71,9 @@ public class AmazonSNSExtendedClientTest {
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
         Map<String, MessageAttributeValue> attributes = publishRequestCaptor.getValue().messageAttributes();
-        Assert.assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).dataType());
+        assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).dataType());
 
-        Assert.assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).stringValue()));
+        assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).stringValue()));
     }
 
     @Test
@@ -84,9 +91,9 @@ public class AmazonSNSExtendedClientTest {
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
         Map<String, MessageAttributeValue> attributes = publishRequestCaptor.getValue().messageAttributes();
-        Assert.assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).dataType());
+        assertEquals("Number", attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).dataType());
 
-        Assert.assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).stringValue()));
+        assertEquals(messageBody.length(), (int) Integer.valueOf(attributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME).stringValue()));
     }
 
     @Test
@@ -101,7 +108,7 @@ public class AmazonSNSExtendedClientTest {
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
         Map<String, MessageAttributeValue> attributes = publishRequestCaptor.getValue().messageAttributes();
-        Assert.assertTrue(attributes.isEmpty());
+        assertTrue(attributes.isEmpty());
     }
 
     @Test
@@ -137,10 +144,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown.");
+            fail("An exception should have been thrown.");
 
         } catch (SdkClientException exception) {
-            Assert.assertTrue(exception.getMessage().contains("SNS extended client does not support sending JSON messages"));
+           assertTrue(exception.getMessage().contains("SNS extended client does not support sending JSON messages"));
         }
     }
 
@@ -184,8 +191,8 @@ public class AmazonSNSExtendedClientTest {
             .build();
         extendedSnsWithDefaultConfig.publish(publishRequest);
 
-        Assert.assertEquals(messageBody, publishRequest.message());
-        Assert.assertEquals(attrs, publishRequest.messageAttributes());
+        assertEquals(messageBody, publishRequest.message());
+        assertEquals(attrs, publishRequest.messageAttributes());
     }
 
     @Test
@@ -197,10 +204,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown.");
+            fail("An exception should have been thrown.");
 
         } catch (SdkException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
+            assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
         }
     }
 
@@ -213,10 +220,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
+            fail("An exception should have been thrown");
 
         } catch (SdkException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
+            assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
         }
     }
 
@@ -239,10 +246,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
+            fail("An exception should have been thrown");
 
         } catch (SdkClientException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Message attribute name " +
+            assertTrue(exception.getMessage().contains("Message attribute name " +
                     SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME + " is reserved for use by SNS extended client."));
         }
     }
@@ -266,10 +273,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
+            fail("An exception should have been thrown");
 
         } catch (SdkClientException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Number of message attributes [" + attributeNumber
+            assertTrue(exception.getMessage().contains("Number of message attributes [" + attributeNumber
                     + "] exceeds the maximum allowed for large-payload messages ["
                     + SQSExtendedClientConstants.MAX_ALLOWED_ATTRIBUTES + "]."));
         }
@@ -295,10 +302,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
+            fail("An exception should have been thrown");
 
         } catch (SdkClientException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Total size of Message attributes is "
+            assertTrue(exception.getMessage().contains("Total size of Message attributes is "
                     + expectedSize + " bytes which is larger than the threshold of " + SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
                     + " Bytes. Consider including the payload in the message body instead of message attributes."));
         }
@@ -324,10 +331,10 @@ public class AmazonSNSExtendedClientTest {
 
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
+            fail("An exception should have been thrown");
 
         } catch (SdkClientException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Total size of Message attributes is "
+            assertTrue(exception.getMessage().contains("Total size of Message attributes is "
                     + expectedSize + " bytes which is larger than the threshold of " + SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
                     + " Bytes. Consider including the payload in the message body instead of message attributes."));
         }
