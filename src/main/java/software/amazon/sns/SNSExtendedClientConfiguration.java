@@ -4,8 +4,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.payloadoffloading.PayloadStorageConfiguration;
 import software.amazon.payloadoffloading.ServerSideEncryptionStrategy;
 
+import static software.amazon.sns.SNSExtendedClientConstants.SNS_DEFAULT_MESSAGE_SIZE;
+
 public class SNSExtendedClientConfiguration extends PayloadStorageConfiguration {
-    static final int SNS_DEFAULT_MESSAGE_SIZE = 262144;
 
     public SNSExtendedClientConfiguration() {
         super();

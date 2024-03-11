@@ -6,13 +6,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.SnsAsyncClient;
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.payloadoffloading.Util;
@@ -20,9 +18,11 @@ import software.amazon.payloadoffloading.Util;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -33,30 +33,31 @@ import static software.amazon.sns.SNSExtendedClientConstants.MULTIPLE_PROTOCOL_M
 import static software.amazon.sns.SNSExtendedClientConstants.SNS_DEFAULT_MESSAGE_SIZE;
 import static software.amazon.sns.SNSExtendedClientConstants.USER_AGENT_HEADER_NAME;
 
-public class AmazonSNSExtendedClientTest {
+public class AmazonSNSExtendedAsyncClientTest {
 
     private static final String S3_BUCKET_NAME = "test-bucket-name";
     private static final String SNS_TOPIC_ARN = "test-topic-arn";
     private static final int LESS_THAN_SNS_SIZE_LIMIT = 3;
     private static final int MORE_THAN_SNS_SIZE_LIMIT = SNS_DEFAULT_MESSAGE_SIZE + 1;
-    // should be > 1 and << SNSExtendedClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
+    // should be > 1 and << SNSExtendedAsyncClientConfiguration.SNS_DEFAULT_MESSAGE_SIZE
     private static final int ARBITRARY_SMALLER_THRESHOLD = 500;
 
-    private SnsClient extendedSnsWithDefaultConfig;
-    private SnsClient mockSnsBackend;
-    private S3Client mockS3;
+    private SnsAsyncClient extendedSnsWithDefaultConfig;
+    private SnsAsyncClient mockSnsBackend;
+    private S3AsyncClient mockS3;
 
     @Before
     public void setupClient() {
-        mockS3 = mock(S3Client.class);
-        mockSnsBackend = mock(SnsClient.class);
-        when(mockS3.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenReturn(null);
+        mockS3 = mock(S3AsyncClient.class);
+        mockSnsBackend = mock(SnsAsyncClient.class);
+        when(mockS3.putObject(any(PutObjectRequest.class), isA(AsyncRequestBody.class))).thenReturn(
+                CompletableFuture.completedFuture(null));
 
-        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
+        SNSExtendedAsyncClientConfiguration SNSExtendedAsyncClientConfiguration = new SNSExtendedAsyncClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
                 .withPayloadSizeThreshold(SNS_DEFAULT_MESSAGE_SIZE);
 
-        extendedSnsWithDefaultConfig = spy(new AmazonSNSExtendedClient(mockSnsBackend, snsExtendedClientConfiguration));
+        extendedSnsWithDefaultConfig = spy(new AmazonSNSExtendedAsyncClient(mockSnsBackend, SNSExtendedAsyncClientConfiguration));
     }
 
     @Test
@@ -66,7 +67,7 @@ public class AmazonSNSExtendedClientTest {
         PublishRequest publishRequest = PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build();
         extendedSnsWithDefaultConfig.publish(publishRequest);
 
-        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
         ArgumentCaptor<PublishRequest> publishRequestCaptor = ArgumentCaptor.forClass(PublishRequest.class);
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
@@ -86,7 +87,7 @@ public class AmazonSNSExtendedClientTest {
         publishRequestBuilder.messageAttributes(attrs);
         extendedSnsWithDefaultConfig.publish(publishRequestBuilder.build());
 
-        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
         ArgumentCaptor<PublishRequest> publishRequestCaptor = ArgumentCaptor.forClass(PublishRequest.class);
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
@@ -103,7 +104,7 @@ public class AmazonSNSExtendedClientTest {
         PublishRequest publishRequest = PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build();
         extendedSnsWithDefaultConfig.publish(publishRequest);
 
-        verify(mockS3, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, never()).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
         ArgumentCaptor<PublishRequest> publishRequestCaptor = ArgumentCaptor.forClass(PublishRequest.class);
         verify(mockSnsBackend, times(1)).publish(publishRequestCaptor.capture());
 
@@ -114,21 +115,21 @@ public class AmazonSNSExtendedClientTest {
     @Test
     public void testPublishMessageWithLargePayloadSupportDisabledS3IsNotUsedAndSqsBackendIsResponsibleToFailIt() {
         String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
-        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
+        SNSExtendedAsyncClientConfiguration SNSExtendedAsyncClientConfiguration = new SNSExtendedAsyncClientConfiguration()
                 .withPayloadSupportDisabled();
-        SnsClient snsExtended = spy(new AmazonSNSExtendedClient(mockSnsBackend, snsExtendedClientConfiguration));
+        SnsAsyncClient snsExtended = spy(new AmazonSNSExtendedAsyncClient(mockSnsBackend, SNSExtendedAsyncClientConfiguration));
 
         PublishRequest publishRequest = PublishRequest.builder()
             .topicArn(SNS_TOPIC_ARN)
             .message(messageBody)
             .overrideConfiguration(
                 AwsRequestOverrideConfiguration.builder()
-                    .putHeader(USER_AGENT_HEADER_NAME, AmazonSNSExtendedClient.USER_AGENT_HEADER)
+                    .putHeader(USER_AGENT_HEADER_NAME, AmazonSNSExtendedAsyncClient.USER_AGENT_HEADER)
                     .build())
             .build();
         snsExtended.publish(publishRequest);
 
-        verify(mockS3, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, never()).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
         verify(mockSnsBackend).publish(eq(publishRequest));
     }
 
@@ -145,7 +146,6 @@ public class AmazonSNSExtendedClientTest {
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
             Assert.fail("An exception should have been thrown.");
-
         } catch (SdkClientException exception) {
             Assert.assertTrue(exception.getMessage().contains("SNS extended client does not support sending JSON messages"));
         }
@@ -154,28 +154,28 @@ public class AmazonSNSExtendedClientTest {
     @Test
     public void testPublishMessageWithAlwaysThroughS3AndSmallMessageS3IsUsed() {
         String messageBody = generateStringWithLength(LESS_THAN_SNS_SIZE_LIMIT);
-        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
+        SNSExtendedAsyncClientConfiguration SNSExtendedAsyncClientConfiguration = new SNSExtendedAsyncClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
                 .withAlwaysThroughS3(true);
 
-        SnsClient snsExtended = spy(new AmazonSNSExtendedClient(mock(SnsClient.class), snsExtendedClientConfiguration));
+        SnsAsyncClient snsExtended = spy(new AmazonSNSExtendedAsyncClient(mock(SnsAsyncClient.class), SNSExtendedAsyncClientConfiguration));
 
         snsExtended.publish(PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build());
 
-        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
     }
 
     @Test
     public void testPublishMessageWithSetMessageSizeThresholdThresholdIsHonored() {
         String messageBody = generateStringWithLength(ARBITRARY_SMALLER_THRESHOLD * 2);
-        SNSExtendedClientConfiguration snsExtendedClientConfiguration = new SNSExtendedClientConfiguration()
+        SNSExtendedAsyncClientConfiguration SNSExtendedAsyncClientConfiguration = new SNSExtendedAsyncClientConfiguration()
                 .withPayloadSupportEnabled(mockS3, S3_BUCKET_NAME)
                 .withPayloadSizeThreshold(ARBITRARY_SMALLER_THRESHOLD);
 
-        SnsClient snsExtended = spy(new AmazonSNSExtendedClient(mock(SnsClient.class), snsExtendedClientConfiguration));
+        SnsAsyncClient snsExtended = spy(new AmazonSNSExtendedAsyncClient(mock(SnsAsyncClient.class), SNSExtendedAsyncClientConfiguration));
 
         snsExtended.publish(PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build());
-        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(mockS3, times(1)).putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
     }
 
     @Test
@@ -193,38 +193,6 @@ public class AmazonSNSExtendedClientTest {
 
         Assert.assertEquals(messageBody, publishRequest.message());
         Assert.assertEquals(attrs, publishRequest.messageAttributes());
-    }
-
-    @Test
-    public void testThrowAmazonServiceExceptionWhenS3ThrowsAwsServiceException() {
-        when(mockS3.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenThrow(AwsServiceException.class);
-
-        String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
-        PublishRequest publishRequest = PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build();
-
-        try {
-            extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown.");
-
-        } catch (SdkException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
-        }
-    }
-
-    @Test
-    public void testThrowAmazonClientExceptionWhenS3ThrowsSdkClientException() {
-        when(mockS3.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenThrow(SdkClientException.class);
-
-        String messageBody = generateStringWithLength(MORE_THAN_SNS_SIZE_LIMIT);
-        PublishRequest publishRequest = PublishRequest.builder().topicArn(SNS_TOPIC_ARN).message(messageBody).build();
-
-        try {
-            extendedSnsWithDefaultConfig.publish(publishRequest);
-            Assert.fail("An exception should have been thrown");
-
-        } catch (SdkException exception) {
-            Assert.assertTrue(exception.getMessage().contains("Failed to store the message content in an S3 object."));
-        }
     }
 
     @Test
@@ -247,7 +215,6 @@ public class AmazonSNSExtendedClientTest {
         try {
             extendedSnsWithDefaultConfig.publish(publishRequest);
             Assert.fail("An exception should have been thrown");
-
         } catch (SdkClientException exception) {
             Assert.assertTrue(exception.getMessage().contains("Message attribute name " +
                     SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME + " is reserved for use by SNS extended client."));
