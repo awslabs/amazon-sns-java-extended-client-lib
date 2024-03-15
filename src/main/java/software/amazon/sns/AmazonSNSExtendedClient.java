@@ -3,29 +3,71 @@ package software.amazon.sns;
 import com.amazon.sqs.javamessaging.SQSExtendedClientConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.model.*;
+import software.amazon.awssdk.services.sns.model.AuthorizationErrorException;
+import software.amazon.awssdk.services.sns.model.EndpointDisabledException;
+import software.amazon.awssdk.services.sns.model.InternalErrorException;
+import software.amazon.awssdk.services.sns.model.InvalidParameterException;
+import software.amazon.awssdk.services.sns.model.InvalidParameterValueException;
+import software.amazon.awssdk.services.sns.model.InvalidSecurityException;
+import software.amazon.awssdk.services.sns.model.KmsAccessDeniedException;
+import software.amazon.awssdk.services.sns.model.KmsDisabledException;
+import software.amazon.awssdk.services.sns.model.KmsInvalidStateException;
+import software.amazon.awssdk.services.sns.model.KmsNotFoundException;
+import software.amazon.awssdk.services.sns.model.KmsOptInRequiredException;
+import software.amazon.awssdk.services.sns.model.KmsThrottlingException;
+import software.amazon.awssdk.services.sns.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sns.model.NotFoundException;
+import software.amazon.awssdk.services.sns.model.PlatformApplicationDisabledException;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
+import software.amazon.awssdk.services.sns.model.SnsException;
 import software.amazon.awssdk.utils.StringUtils;
-import software.amazon.payloadoffloading.*;
+import software.amazon.payloadoffloading.PayloadStore;
+import software.amazon.payloadoffloading.S3BackedPayloadStore;
+import software.amazon.payloadoffloading.S3Dao;
+import software.amazon.payloadoffloading.Util;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
-    static final String MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE = "json";
-    static final String USER_AGENT_HEADER_NAME = "User-Agent";
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.checkMessageAttributes;
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.checkSizeOfMessageAttributes;
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.getMessageAttributeSize;
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.getMsgAttributesSize;
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.getS3keyAttribute;
+import static software.amazon.sns.AmazonSNSExtendedClientUtil.isTotalMessageSizeLargerThanThreshold;
+import static software.amazon.sns.SNSExtendedClientConstants.MULTIPLE_PROTOCOL_MESSAGE_STRUCTURE;
+import static software.amazon.sns.SNSExtendedClientConstants.USER_AGENT_HEADER_NAME;
+
+public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase implements SnsClient{
+
     static final String USER_AGENT_HEADER = Util.getUserAgentHeader(AmazonSNSExtendedClient.class.getSimpleName());
     
     private static final Log LOGGER = LogFactory.getLog(AmazonSNSExtendedClient.class);
-    private static final String S3_KEY = "S3Key";
+
     private PayloadStore payloadStore;
     private SNSExtendedClientConfiguration snsExtendedClientConfiguration;
+
+    /**
+     * Constructs a new Amazon SNS extended client to invoke service methods on
+     * Amazon SNS with extended functionality using the specified Amazon SNS
+     * client object.
+     *
+     * <p>
+     * All service calls made using this new client object are blocking, and
+     * will not return until the service call completes.
+     *
+     * @param snsClient
+     *            The Amazon SNS client to use to connect to Amazon SNS.
+     */
+    public AmazonSNSExtendedClient(SnsClient snsClient) {
+        this(snsClient, new SNSExtendedClientConfiguration());
+    }
 
     /**
      * Constructs a new Amazon SNS extended client to invoke service methods on
@@ -158,7 +200,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         }
 
         checkMessageAttributes(publishRequest.messageAttributes());
-        checkSizeOfMessageAttributes(messageAttributesSize);
+        checkSizeOfMessageAttributes(snsExtendedClientConfiguration.getPayloadSizeThreshold(), messageAttributesSize);
 
         PublishRequest clonedPublishRequest = copyPublishRequest(publishRequest);
         publishRequest = storeMessageInExtendedStore(clonedPublishRequest, messageAttributesSize);
@@ -166,86 +208,10 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         return super.publish(publishRequest);
     }
 
-    private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
-        return snsExtendedClientConfiguration.isAlwaysThroughS3() ||
-                (snsExtendedClientConfiguration.isPayloadSupportEnabled() && isTotalMessageSizeLargerThanThreshold(totalMessageSize));
-    }
-
-    private void checkMessageAttributes(Map<String, MessageAttributeValue> messageAttributes) {
-        int messageAttributesNum = messageAttributes.size();
-        if (messageAttributesNum > SQSExtendedClientConstants.MAX_ALLOWED_ATTRIBUTES) {
-            String errorMessage = "Number of message attributes [" + messageAttributesNum
-                    + "] exceeds the maximum allowed for large-payload messages ["
-                    + SQSExtendedClientConstants.MAX_ALLOWED_ATTRIBUTES + "].";
-            LOGGER.error(errorMessage);
-            throw SdkClientException.create(errorMessage);
-        }
-
-        MessageAttributeValue largePayloadAttributeName = messageAttributes.get(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME);
-
-        if (largePayloadAttributeName != null) {
-            String errorMessage = "Message attribute name " + SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME
-                    + " is reserved for use by SNS extended client.";
-            LOGGER.error(errorMessage);
-            throw SdkClientException.create(errorMessage);
-        }
-    }
-
-    private void checkSizeOfMessageAttributes(long messageAttributeSize) {
-        if (messageAttributeSize > snsExtendedClientConfiguration.getPayloadSizeThreshold()) {
-            String errorMessage = "Total size of Message attributes is " + messageAttributeSize
-                    + " bytes which is larger than the threshold of " + snsExtendedClientConfiguration.getPayloadSizeThreshold()
-                    + " Bytes. Consider including the payload in the message body instead of message attributes.";
-            LOGGER.error(errorMessage);
-            throw SdkClientException.create(errorMessage);
-        }
-    }
-
-    private boolean isTotalMessageSizeLargerThanThreshold(long totalMessageSize) {
-        return (totalMessageSize > snsExtendedClientConfiguration.getPayloadSizeThreshold());
-    }
-
-    private int getMsgAttributesSize(Map<String, MessageAttributeValue> msgAttributes) {
-        int totalMsgAttributesSize = 0;
-
-        for (Map.Entry<String, MessageAttributeValue> entry : msgAttributes.entrySet()) {
-            totalMsgAttributesSize += getMessageAttributeSize(entry.getKey(), entry.getValue());
-        }
-
-        return totalMsgAttributesSize;
-    }
-
-    private long getMessageAttributeSize(String MessageAttributeKey, MessageAttributeValue value) {
-        long messageAttributeSize = Util.getStringSizeInBytes(MessageAttributeKey);
-
-        if (value.dataType() != null) {
-            messageAttributeSize += Util.getStringSizeInBytes(value.dataType());
-        }
-
-        String stringVal = value.stringValue();
-        if (stringVal != null) {
-            messageAttributeSize += Util.getStringSizeInBytes(stringVal);
-        }
-
-        SdkBytes binaryVal = value.binaryValue();
-        if (binaryVal != null) {
-            messageAttributeSize += binaryVal.asByteArray().length;
-        }
-
-        return messageAttributeSize;
-    }
-
-    private static String getS3keyAttribute(Map<String, MessageAttributeValue> messageAttributes) {
-        if (messageAttributes != null && messageAttributes.containsKey(S3_KEY)) {
-            MessageAttributeValue attributeS3KeyValue = messageAttributes.get(S3_KEY);
-            return (attributeS3KeyValue == null) ? null : attributeS3KeyValue.stringValue();
-        }
-        return null;
-    }
 
     private PublishRequest storeMessageInExtendedStore(PublishRequest publishRequest, long messageAttributeSize) {
         String messageContentStr = publishRequest.message();
-        Long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
+        long messageContentSize = Util.getStringSizeInBytes(messageContentStr);
         String s3Key = getS3keyAttribute(publishRequest.messageAttributes());
 
         PublishRequest.Builder publishRequestBuilder = publishRequest.toBuilder();
@@ -254,7 +220,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
 
         MessageAttributeValue.Builder messageAttributeValueBuilder = MessageAttributeValue.builder();
         messageAttributeValueBuilder.dataType("Number");
-        messageAttributeValueBuilder.stringValue(messageContentSize.toString());
+        messageAttributeValueBuilder.stringValue(String.valueOf(messageContentSize));
         MessageAttributeValue messageAttributeValue = messageAttributeValueBuilder.build();
 
         Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
@@ -262,7 +228,7 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         publishRequestBuilder.messageAttributes(attributes);
 
         messageAttributeSize += getMessageAttributeSize(SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME, messageAttributeValue);
-        checkSizeOfMessageAttributes(messageAttributeSize);
+        checkSizeOfMessageAttributes(snsExtendedClientConfiguration.getPayloadSizeThreshold(), messageAttributeSize);
 
         return publishRequestBuilder.build();
     }
@@ -274,6 +240,13 @@ public class AmazonSNSExtendedClient extends AmazonSNSExtendedClientBase {
         Map<String, MessageAttributeValue> attributes = new HashMap<>(publishRequest.messageAttributes());
         publishRequestBuilder.messageAttributes(attributes);
         return publishRequestBuilder.build();
+    }
+
+    private boolean shouldExtendedStoreBeUsed(long totalMessageSize) {
+        return snsExtendedClientConfiguration.isAlwaysThroughS3() ||
+                (snsExtendedClientConfiguration.isPayloadSupportEnabled() &&
+                        isTotalMessageSizeLargerThanThreshold(
+                                snsExtendedClientConfiguration.getPayloadSizeThreshold(),totalMessageSize));
     }
 
     @Override

@@ -1,9 +1,99 @@
 package software.amazon.sns;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.core.exception.*;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.model.*;
+import software.amazon.awssdk.services.sns.model.AddPermissionRequest;
+import software.amazon.awssdk.services.sns.model.AddPermissionResponse;
+import software.amazon.awssdk.services.sns.model.AuthorizationErrorException;
+import software.amazon.awssdk.services.sns.model.CheckIfPhoneNumberIsOptedOutRequest;
+import software.amazon.awssdk.services.sns.model.CheckIfPhoneNumberIsOptedOutResponse;
+import software.amazon.awssdk.services.sns.model.ConcurrentAccessException;
+import software.amazon.awssdk.services.sns.model.ConfirmSubscriptionRequest;
+import software.amazon.awssdk.services.sns.model.ConfirmSubscriptionResponse;
+import software.amazon.awssdk.services.sns.model.CreatePlatformApplicationRequest;
+import software.amazon.awssdk.services.sns.model.CreatePlatformApplicationResponse;
+import software.amazon.awssdk.services.sns.model.CreatePlatformEndpointRequest;
+import software.amazon.awssdk.services.sns.model.CreatePlatformEndpointResponse;
+import software.amazon.awssdk.services.sns.model.CreateTopicRequest;
+import software.amazon.awssdk.services.sns.model.CreateTopicResponse;
+import software.amazon.awssdk.services.sns.model.DeleteEndpointRequest;
+import software.amazon.awssdk.services.sns.model.DeleteEndpointResponse;
+import software.amazon.awssdk.services.sns.model.DeletePlatformApplicationRequest;
+import software.amazon.awssdk.services.sns.model.DeletePlatformApplicationResponse;
+import software.amazon.awssdk.services.sns.model.DeleteTopicRequest;
+import software.amazon.awssdk.services.sns.model.DeleteTopicResponse;
+import software.amazon.awssdk.services.sns.model.EndpointDisabledException;
+import software.amazon.awssdk.services.sns.model.FilterPolicyLimitExceededException;
+import software.amazon.awssdk.services.sns.model.GetEndpointAttributesRequest;
+import software.amazon.awssdk.services.sns.model.GetEndpointAttributesResponse;
+import software.amazon.awssdk.services.sns.model.GetPlatformApplicationAttributesRequest;
+import software.amazon.awssdk.services.sns.model.GetPlatformApplicationAttributesResponse;
+import software.amazon.awssdk.services.sns.model.GetSmsAttributesRequest;
+import software.amazon.awssdk.services.sns.model.GetSmsAttributesResponse;
+import software.amazon.awssdk.services.sns.model.GetSubscriptionAttributesRequest;
+import software.amazon.awssdk.services.sns.model.GetSubscriptionAttributesResponse;
+import software.amazon.awssdk.services.sns.model.GetTopicAttributesRequest;
+import software.amazon.awssdk.services.sns.model.GetTopicAttributesResponse;
+import software.amazon.awssdk.services.sns.model.InternalErrorException;
+import software.amazon.awssdk.services.sns.model.InvalidParameterException;
+import software.amazon.awssdk.services.sns.model.InvalidParameterValueException;
+import software.amazon.awssdk.services.sns.model.InvalidSecurityException;
+import software.amazon.awssdk.services.sns.model.KmsAccessDeniedException;
+import software.amazon.awssdk.services.sns.model.KmsDisabledException;
+import software.amazon.awssdk.services.sns.model.KmsInvalidStateException;
+import software.amazon.awssdk.services.sns.model.KmsNotFoundException;
+import software.amazon.awssdk.services.sns.model.KmsOptInRequiredException;
+import software.amazon.awssdk.services.sns.model.KmsThrottlingException;
+import software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationRequest;
+import software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationResponse;
+import software.amazon.awssdk.services.sns.model.ListPhoneNumbersOptedOutRequest;
+import software.amazon.awssdk.services.sns.model.ListPhoneNumbersOptedOutResponse;
+import software.amazon.awssdk.services.sns.model.ListPlatformApplicationsRequest;
+import software.amazon.awssdk.services.sns.model.ListPlatformApplicationsResponse;
+import software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicRequest;
+import software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicResponse;
+import software.amazon.awssdk.services.sns.model.ListSubscriptionsRequest;
+import software.amazon.awssdk.services.sns.model.ListSubscriptionsResponse;
+import software.amazon.awssdk.services.sns.model.ListTagsForResourceRequest;
+import software.amazon.awssdk.services.sns.model.ListTagsForResourceResponse;
+import software.amazon.awssdk.services.sns.model.ListTopicsRequest;
+import software.amazon.awssdk.services.sns.model.ListTopicsResponse;
+import software.amazon.awssdk.services.sns.model.NotFoundException;
+import software.amazon.awssdk.services.sns.model.OptInPhoneNumberRequest;
+import software.amazon.awssdk.services.sns.model.OptInPhoneNumberResponse;
+import software.amazon.awssdk.services.sns.model.PlatformApplicationDisabledException;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
+import software.amazon.awssdk.services.sns.model.RemovePermissionRequest;
+import software.amazon.awssdk.services.sns.model.RemovePermissionResponse;
+import software.amazon.awssdk.services.sns.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.sns.model.SetEndpointAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SetEndpointAttributesResponse;
+import software.amazon.awssdk.services.sns.model.SetPlatformApplicationAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SetPlatformApplicationAttributesResponse;
+import software.amazon.awssdk.services.sns.model.SetSmsAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SetSmsAttributesResponse;
+import software.amazon.awssdk.services.sns.model.SetSubscriptionAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SetSubscriptionAttributesResponse;
+import software.amazon.awssdk.services.sns.model.SetTopicAttributesRequest;
+import software.amazon.awssdk.services.sns.model.SetTopicAttributesResponse;
+import software.amazon.awssdk.services.sns.model.SnsException;
+import software.amazon.awssdk.services.sns.model.StaleTagException;
+import software.amazon.awssdk.services.sns.model.SubscribeRequest;
+import software.amazon.awssdk.services.sns.model.SubscribeResponse;
+import software.amazon.awssdk.services.sns.model.SubscriptionLimitExceededException;
+import software.amazon.awssdk.services.sns.model.TagLimitExceededException;
+import software.amazon.awssdk.services.sns.model.TagPolicyException;
+import software.amazon.awssdk.services.sns.model.TagResourceRequest;
+import software.amazon.awssdk.services.sns.model.TagResourceResponse;
+import software.amazon.awssdk.services.sns.model.ThrottledException;
+import software.amazon.awssdk.services.sns.model.TopicLimitExceededException;
+import software.amazon.awssdk.services.sns.model.UnsubscribeRequest;
+import software.amazon.awssdk.services.sns.model.UnsubscribeResponse;
+import software.amazon.awssdk.services.sns.model.UntagResourceRequest;
+import software.amazon.awssdk.services.sns.model.UntagResourceResponse;
 import software.amazon.awssdk.services.sns.paginators.ListEndpointsByPlatformApplicationIterable;
 import software.amazon.awssdk.services.sns.paginators.ListPlatformApplicationsIterable;
 import software.amazon.awssdk.services.sns.paginators.ListSubscriptionsByTopicIterable;
@@ -53,7 +143,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * specified actions.
      * </p>
      *
-     * @param addPermissionRequest
+     * @param addPermissionRequest AddPermissionRequest object
      * @return Result of the AddPermission operation returned by the service.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
@@ -352,7 +442,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * does not result in an error.
      * </p>
      *
-     * @param deleteTopicRequest
+     * @param deleteTopicRequest DeleteTopicRequest Object
      * @return Result of the DeleteTopic operation returned by the service.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
@@ -547,7 +637,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * <br/>
      * <p>
      * This is a variant of
-     * {@link #listEndpointsByPlatformApplication(software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationRequest)}
+     * {@link #listEndpointsByPlatformApplication(ListEndpointsByPlatformApplicationRequest)}
      * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
      * internally handle making service calls for you.
      * </p>
@@ -597,7 +687,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <p>
      * <b>Note: If you prefer to have control on service calls, use the
-     * {@link #listEndpointsByPlatformApplication(software.amazon.awssdk.services.sns.model.ListEndpointsByPlatformApplicationRequest)}
+     * {@link #listEndpointsByPlatformApplication(ListEndpointsByPlatformApplicationRequest)}
      * operation.</b>
      * </p>
      *
@@ -717,7 +807,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * <br/>
      * <p>
      * This is a variant of
-     * {@link #listPlatformApplications(software.amazon.awssdk.services.sns.model.ListPlatformApplicationsRequest)}
+     * {@link #listPlatformApplications(ListPlatformApplicationsRequest)}
      * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
      * internally handle making service calls for you.
      * </p>
@@ -767,7 +857,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <p>
      * <b>Note: If you prefer to have control on service calls, use the
-     * {@link #listPlatformApplications(software.amazon.awssdk.services.sns.model.ListPlatformApplicationsRequest)}
+     * {@link #listPlatformApplications(ListPlatformApplicationsRequest)}
      * operation.</b>
      * </p>
      *
@@ -840,7 +930,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * <br/>
      * <p>
      * This is a variant of
-     * {@link #listSubscriptions(software.amazon.awssdk.services.sns.model.ListSubscriptionsRequest)} operation. The
+     * {@link #listSubscriptions(ListSubscriptionsRequest)} operation. The
      * return type is a custom iterable that can be used to iterate through all the pages. SDK will internally handle
      * making service calls for you.
      * </p>
@@ -890,7 +980,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <p>
      * <b>Note: If you prefer to have control on service calls, use the
-     * {@link #listSubscriptions(software.amazon.awssdk.services.sns.model.ListSubscriptionsRequest)} operation.</b>
+     * {@link #listSubscriptions(ListSubscriptionsRequest)} operation.</b>
      * </p>
      *
      * @param listSubscriptionsRequest
@@ -964,7 +1054,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * <br/>
      * <p>
      * This is a variant of
-     * {@link #listSubscriptionsByTopic(software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicRequest)}
+     * {@link #listSubscriptionsByTopic(ListSubscriptionsByTopicRequest)}
      * operation. The return type is a custom iterable that can be used to iterate through all the pages. SDK will
      * internally handle making service calls for you.
      * </p>
@@ -1014,7 +1104,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <p>
      * <b>Note: If you prefer to have control on service calls, use the
-     * {@link #listSubscriptionsByTopic(software.amazon.awssdk.services.sns.model.ListSubscriptionsByTopicRequest)}
+     * {@link #listSubscriptionsByTopic(ListSubscriptionsByTopicRequest)}
      * operation.</b>
      * </p>
      *
@@ -1058,7 +1148,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * This action is throttled at 30 transactions per second (TPS).
      * </p>
      *
-     * @param listTopicsRequest
+     * @param listTopicsRequest ListTopicRequest Object
      * @return Result of the ListTopics operation returned by the service.
      * @throws InvalidParameterException   Indicates that a request parameter does not comply with the associated constraints.
      * @throws InternalErrorException      Indicates an internal service error.
@@ -1088,7 +1178,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <br/>
      * <p>
-     * This is a variant of {@link #listTopics(software.amazon.awssdk.services.sns.model.ListTopicsRequest)} operation.
+     * This is a variant of {@link #listTopics(ListTopicsRequest)} operation.
      * The return type is a custom iterable that can be used to iterate through all the pages. SDK will internally
      * handle making service calls for you.
      * </p>
@@ -1137,10 +1227,10 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </p>
      * <p>
      * <b>Note: If you prefer to have control on service calls, use the
-     * {@link #listTopics(software.amazon.awssdk.services.sns.model.ListTopicsRequest)} operation.</b>
+     * {@link #listTopics(ListTopicsRequest)} operation.</b>
      * </p>
      *
-     * @param listTopicsRequest
+     * @param listTopicsRequest ListTopicsRequest Object
      * @return A custom iterable that can be used to iterate through all the response pages.
      * @throws InvalidParameterException
      *         Indicates that a request parameter does not comply with the associated constraints.
@@ -1523,7 +1613,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Notification Service Developer Guide</i>.
      * </p>
      *
-     * @param listTagsForResourceRequest
+     * @param listTagsForResourceRequest ListTagsForResourceRequest Object
      * @return Result of the ListTagsForResource operation returned by the service.
      * @throws ResourceNotFoundException   Can't tag resource. Verify that the topic exists.
      * @throws TagPolicyException          The request doesn't comply with the IAM tag policy. Correct your request and then retry it.
@@ -1584,7 +1674,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * </li>
      * </ul>
      *
-     * @param tagResourceRequest
+     * @param tagResourceRequest TagResourceRequest Object
      * @return Result of the TagResource operation returned by the service.
      * @throws ResourceNotFoundException   Can't tag resource. Verify that the topic exists.
      * @throws TagLimitExceededException   Can't add more than 50 tags to a topic.
@@ -1615,7 +1705,7 @@ abstract class AmazonSNSExtendedClientBase implements SnsClient {
      * Guide</i>.
      * </p>
      *
-     * @param untagResourceRequest
+     * @param untagResourceRequest UntagResourceRequest Object
      * @return Result of the UntagResource operation returned by the service.
      * @throws ResourceNotFoundException   Can't tag resource. Verify that the topic exists.
      * @throws TagLimitExceededException   Can't add more than 50 tags to a topic.
