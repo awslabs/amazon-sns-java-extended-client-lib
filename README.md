@@ -15,7 +15,7 @@ It saves the actual payload in S3 and publishes the reference of the stored S3 o
   <dependency>
     <groupId>software.amazon.sns</groupId>
     <artifactId>sns-extended-client</artifactId>
-    <version>2.0.2</version>
+    <version>2.1.0</version>
     <type>jar</type>
   </dependency>
 ```
