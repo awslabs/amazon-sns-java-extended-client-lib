@@ -26,7 +26,7 @@
     </licenses>
 
     <properties>
-        <aws-java-sdk.version>2.25.6</aws-java-sdk.version>
+        <aws-java-sdk.version>2.25.11</aws-java-sdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
